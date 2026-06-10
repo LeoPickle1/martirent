@@ -249,6 +249,11 @@ unit: "Unit",
 date: "Date",
 back: "Back",
 everythingGood: "Everything looks good.",
+searchResults: "Search Results",
+noPropertiesFound: "No properties found.",
+noMaintenanceFound: "No maintenance found.",
+noContactsFound: "No contacts found.",
+noDocumentsFound: "No documents found.",
   },
   de: {
     propertyNameQuestion: "Name der Immobilie?",
@@ -311,6 +316,11 @@ unit: "Einheit",
 date: "Datum",
 back: "Zurück",
 everythingGood: "Alles sieht gut aus.",
+searchResults: "Suchergebnisse",
+noPropertiesFound: "Keine Immobilien gefunden.",
+noMaintenanceFound: "Kein Unterhalt gefunden.",
+noContactsFound: "Keine Kontakte gefunden.",
+noDocumentsFound: "Keine Dokumente gefunden.",
   },
 };
 
@@ -823,10 +833,9 @@ const propertyNotesForSelected = selectedProperty
 </div>
 {search && (
   <>
-    <h3>Search Results</h3>
-
+<h3>{t.searchResults}</h3>
     <div className="card">
-      <h3>Properties</h3>
+      <h3>{t.properties}</h3>
       {filteredProperties.length ? (
         filteredProperties.map((p, i) => (
           <p
@@ -841,12 +850,12 @@ const propertyNotesForSelected = selectedProperty
           </p>
         ))
       ) : (
-        <p className="muted">No properties found.</p>
+        <p className="muted">{t.noPropertiesFound}</p>
       )}
     </div>
 
     <div className="card">
-      <h3>Maintenance</h3>
+      <h3>{t.maintenance}</h3>
       {filteredItems.length ? (
         filteredItems.map((m, i) => (
           <p
@@ -858,12 +867,12 @@ const propertyNotesForSelected = selectedProperty
           </p>
         ))
       ) : (
-        <p className="muted">No maintenance found.</p>
+        <p className="muted">{t.noMaintenanceFound}</p>
       )}
     </div>
 
     <div className="card">
-      <h3>Contacts</h3>
+      <h3>{t.contacts}</h3>
       {filteredContacts.length ? (
         filteredContacts.map((c, i) => (
           <p
@@ -875,12 +884,12 @@ const propertyNotesForSelected = selectedProperty
           </p>
         ))
       ) : (
-        <p className="muted">No contacts found.</p>
+        <p className="muted">{t.noContactsFound}</p>
       )}
     </div>
 
     <div className="card">
-      <h3>Documents</h3>
+      <h3>{t.documents}</h3>
       {filteredDocuments.length ? (
         filteredDocuments.map((d, i) => (
           <p
@@ -892,7 +901,7 @@ const propertyNotesForSelected = selectedProperty
           </p>
         ))
       ) : (
-        <p className="muted">No documents found.</p>
+        <p className="muted">{t.noDocumentsFound}</p>
       )}
     </div>
   </>
