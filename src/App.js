@@ -404,6 +404,7 @@ useEffect(() => {
       JSON.stringify([...sentEmails, emailId])
     );
   });
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [maintenance]);
   const filteredItems = items
   .filter((m) => {
