@@ -480,24 +480,79 @@ useEffect(() => {
     return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   };
 
-  const enableNotifications = async () => {
-    if (!("Notification" in window)) {
-      alert("Notifications are not supported in this browser.");
-      return;
-    }
+  const urlBase64ToUint8Array = (base64String) => {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
 
-    const permission = await Notification.requestPermission();
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
 
-    if (permission === "granted") {
-      setNotificationsEnabled(true);
-      localStorage.setItem("notificationsEnabled", "true");
-      setAppNotice("🔔 Notifications enabled");
-    } else {
-      setAppNotice("❌ Notifications blocked");
-    }
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
 
+  return outputArray;
+};
+
+const enableNotifications = async () => {
+  if (!("Notification" in window)) {
+    alert("Notifications are not supported in this browser.");
+    return;
+  }
+
+  if (!("serviceWorker" in navigator)) {
+    alert("Service workers are not supported in this browser.");
+    return;
+  }
+
+  if (!("PushManager" in window)) {
+    alert("Push notifications are not supported in this browser.");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+
+  if (permission !== "granted") {
+    setAppNotice("❌ Notifications blocked");
     setTimeout(() => setAppNotice(""), 3000);
-  };
+    return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register("/sw.js");
+
+    const keyResponse = await fetch(
+      "https://martirent-backend-production.up.railway.app/vapid-public-key"
+    );
+
+    const { publicKey } = await keyResponse.json();
+
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+
+    await fetch("https://martirent-backend-production.up.railway.app/subscribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(subscription),
+    });
+
+    setNotificationsEnabled(true);
+    localStorage.setItem("notificationsEnabled", "true");
+
+    setAppNotice("🔔 Phone notifications enabled");
+    setTimeout(() => setAppNotice(""), 3000);
+  } catch (error) {
+    console.error(error);
+    setAppNotice("❌ Notification setup failed");
+    setTimeout(() => setAppNotice(""), 3000);
+  }
+};
 
   const addProperty = () => {
   const name = prompt(t.propertyNameQuestion);
