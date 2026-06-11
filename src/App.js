@@ -207,7 +207,8 @@ deleteMaintenanceConfirm: "Are you sure you want to delete this maintenance item
 deleteDocumentConfirm: "Are you sure you want to delete this document?",
 deleteContactConfirm: "Are you sure you want to delete this contact?",
 completeMaintenanceConfirm: "Mark this maintenance as complete? This will update the Last Done date to today.",
-    dashboard: "Home Page",
+    appSubtitle: "Swiss Property Manager",
+dashboard: "Home Page",
     welcome: "Welcome to MartiRent",
     description: "Manage properties, maintenance, contacts, and documents in one place.",
     properties: "Properties",
@@ -273,7 +274,8 @@ deleteMaintenanceConfirm: "Möchtest du diesen Unterhalt wirklich löschen?",
 deleteDocumentConfirm: "Möchtest du dieses Dokument wirklich löschen?",
 deleteContactConfirm: "Möchtest du diesen Kontakt wirklich löschen?",
 completeMaintenanceConfirm: "Diesen Unterhalt als erledigt markieren? Das Datum wird auf heute gesetzt.",
-    dashboard: "Startseite",
+appSubtitle: "Schweizer Immobilienverwaltung",   
+dashboard: "Startseite",
     welcome: "Willkommen bei MartiRent",
     description: "Verwalte Immobilien, Unterhalt, Kontakte und Dokumente an einem Ort.",
 
@@ -348,15 +350,24 @@ const todayText = new Date().toLocaleDateString(
     return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
   };
 
-  const items = maintenance.map((m) => {
-    const nextDue = addYears(m.lastDone, m.intervalYears);
+  const items = maintenance
+  .filter((m) => m.lastDone || m.nextDue)
+  .map((m) => {
+    const nextDue = m.nextDue || addYears(m.lastDone, m.intervalYears);
     const days = daysUntil(nextDue);
+    const warningDays = Number(m.warningDays || 30);
 
     return {
       ...m,
       nextDue,
       days,
-      status: days < 0 ? "overdue" : days <= Number(m.warningDays) ? "warning" : "future",
+      warningDays,
+      status:
+        days < 0
+          ? "overdue"
+          : days <= warningDays
+          ? "warning"
+          : "future",
     };
   });
 const sendReminderEmail = async (
@@ -836,7 +847,7 @@ const propertyNotesForSelected = selectedProperty
 >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
   <div>
-    <p className="eyebrow">Swiss Property Manager</p>
+    <p className="eyebrow">{t.appSubtitle}</p>
     <h1>MartiRent</h1>
   </div>
 
