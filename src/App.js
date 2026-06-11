@@ -1071,11 +1071,25 @@ setTab("properties");
                 {attentionItems.length === 0 ? (
                   <p className="muted">{t.everythingGood}</p>
                 ) : (
-                  attentionItems.map((m, i) => (
-                    <p key={i}>
-                      {m.status === "overdue" ? "🚨" : "⚠️"} {m.property}: {m.type}
-                    </p>
-                  ))
+                  attentionItems.map((m, i) => {
+  const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9-_]/g, "");
+
+  return (
+    <button
+      key={i}
+      className="attentionBtn"
+      onClick={() => {
+        setSearch("");
+        setHighlightMaintenance(maintenanceId);
+        setTab("maintenance");
+      }}
+    >
+      {m.status === "overdue" ? "🚨" : "⚠️"} {m.property}: {m.type}
+    </button>
+  );
+})
                 )}
               </div>
 
