@@ -316,3 +316,18 @@ body,
   color: #b30000;
   font-size: 18px;
 }
+.flashCard {
+  animation: flashCard 1.8s ease;
+}
+
+@keyframes flashCard {
+  0% {
+    box-shadow: 0 0 0 4px rgba(179, 0, 0, 0.35);
+    transform: scale(1.02);
+  }
+
+  100% {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    transform: scale(1);
+  }
+}

@@ -8,6 +8,7 @@ export default function App() {
   const [calendarOffset, setCalendarOffset] = useState(0);
   const [appNotice, setAppNotice] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(null);
+  const [highlightMaintenance, setHighlightMaintenance] = useState(null);
   const [showHeader, setShowHeader] = useState(true);
   const [language, setLanguage] = useState("en");
 const [hasLoadedBackend, setHasLoadedBackend] = useState(false);
@@ -188,6 +189,28 @@ useEffect(() => {
     content?.removeEventListener("scroll", handleScroll);
   };
 }, []);
+useEffect(() => {
+  if (!highlightMaintenance) return;
+  if (tab !== "maintenance") return;
+
+  setTimeout(() => {
+    const el = document.getElementById(highlightMaintenance);
+
+    if (el) {
+      el.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      el.classList.add("flashCard");
+
+      setTimeout(() => {
+  el.classList.remove("flashCard");
+  setHighlightMaintenance(null);
+}, 1800);
+    }
+  }, 200);
+}, [highlightMaintenance, tab]);
 const text = {
   en: {
     propertyNameQuestion: "Property name?",
@@ -813,29 +836,62 @@ const propertyNotesForSelected = selectedProperty
       (n) => n.property === selectedProperty.name || n.property === "Allgemein"
     )
   : [];
+  const openTab = (newTab) => {
+  setSearch("");
+  setSelectedProperty(null);
+  setHighlightMaintenance(null);
+  setTab(newTab);
 
-  const renderItem = (m, i) => (
-    <div className={`card ${m.status}`} key={i}>
+  setTimeout(() => {
+    const content = document.querySelector(".content");
+    if (content) {
+      content.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  }, 50);
+};
+const openMaintenanceTab = () => {
+  openTab("maintenance");
+};
+ const renderItem = (m, i) => {
+  const originalIndex = maintenance.findIndex(
+    (item) =>
+      item.property === m.property &&
+      item.type === m.type &&
+      item.company === m.company &&
+      item.lastDone === m.lastDone
+  );
+
+  const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9-_]/g, "");
+
+  return (
+    <div className={`card ${m.status}`} id={maintenanceId} key={i}>
       <h3>{m.type}</h3>
       <p><b>{t.properties}:</b> {m.property}</p>
       <p><b>{t.company}:</b> {m.company}</p>
       <p><b>{t.lastDone}:</b> {m.lastDone}</p>
       <p><b>{t.nextDue}:</b> {m.nextDue}</p>
       <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
-<button className="primaryBtn" onClick={() => completeMaintenance(i)}>
-  ✓ {t.complete}
-</button>
 
-<button onClick={() => editMaintenance(i)}>
-  {t.edit}
-</button>
+      <button className="primaryBtn" onClick={() => completeMaintenance(originalIndex)}>
+        ✓ {t.complete}
+      </button>
 
-<button className="dangerBtn" onClick={() => deleteMaintenance(i)}>
-  {t.delete}
-</button>
+      <button onClick={() => editMaintenance(originalIndex)}>
+        {t.edit}
+      </button>
+
+      <button className="dangerBtn" onClick={() => deleteMaintenance(originalIndex)}>
+        {t.delete}
+      </button>
     </div>
   );
-
+};
+ 
   return (
     <div className="appShell">
       <div className="phone">
@@ -908,7 +964,8 @@ const propertyNotesForSelected = selectedProperty
             key={i}
             onClick={() => {
               setSelectedProperty(p);
-              setTab("properties");
+              setSearch("");
+setTab("properties");
             }}
             style={{ cursor: "pointer" }}
           >
@@ -926,7 +983,7 @@ const propertyNotesForSelected = selectedProperty
         filteredItems.map((m, i) => (
           <p
             key={i}
-            onClick={() => setTab("maintenance")}
+           onClick={openMaintenanceTab}
             style={{ cursor: "pointer" }}
           >
             🔧 {m.property}: {m.type} — {m.company}
@@ -943,7 +1000,7 @@ const propertyNotesForSelected = selectedProperty
         filteredContacts.map((c, i) => (
           <p
             key={i}
-            onClick={() => setTab("contacts")}
+            onClick={() => openTab("contacts")}
             style={{ cursor: "pointer" }}
           >
             📞 {c.company}
@@ -960,7 +1017,7 @@ const propertyNotesForSelected = selectedProperty
         filteredDocuments.map((d, i) => (
           <p
             key={i}
-            onClick={() => setTab("documents")}
+            onClick={() => openTab("documents")}
             style={{ cursor: "pointer" }}
           >
             📄 {d.name} — {d.type}
@@ -997,14 +1054,14 @@ const propertyNotesForSelected = selectedProperty
 
   <div
     className="statCard"
-    onClick={() => setTab("maintenance")}
+    onClick={openMaintenanceTab}
     style={{ cursor: "pointer" }}
   >
     <strong>
       {maintenance.length}
       <span className="overdueSmall"> / {overdue.length}</span>
     </strong>
-    <p>{t.maintenance} / {t.overdue}</p>
+    <p>{t.maintenance}</p>
   </div>
 </div>
 
@@ -1012,7 +1069,7 @@ const propertyNotesForSelected = selectedProperty
 
               <div className="card">
                 {attentionItems.length === 0 ? (
-                  <p className="muted">Everything looks good.</p>
+                  <p className="muted">{t.everythingGood}</p>
                 ) : (
                   attentionItems.map((m, i) => (
                     <p key={i}>
@@ -1025,11 +1082,11 @@ const propertyNotesForSelected = selectedProperty
               <h3>{t.quickActions}</h3>
 
               <div className="quickGrid">
-                <button onClick={() => setTab("properties")}>🏢 {t.properties}</button>
-<button onClick={() => setTab("maintenance")}>🔧 {t.maintenance}</button>
-<button onClick={() => setTab("calendar")}>📅 {t.calendar}</button>
-<button onClick={() => setTab("documents")}>📄 {t.documents}</button>
-              </div>
+  <button onClick={() => openTab("properties")}>🏢 {t.properties}</button>
+  <button onClick={openMaintenanceTab}>🔧 {t.maintenance}</button>
+  <button onClick={() => openTab("calendar")}>📅 {t.calendar}</button>
+  <button onClick={() => openTab("documents")}>📄 {t.documents}</button>
+</div>
 
  <h3>{t.backup}</h3>
 
@@ -1092,8 +1149,32 @@ const propertyNotesForSelected = selectedProperty
                       <h3>{p.name}</h3>
                       <p className="muted">{p.address}</p>
                       <button onClick={() => setSelectedProperty(p)}>{t.viewDetails}</button>
-                      <button onClick={() => editProperty(i)}>{t.edit}</button>
-                      <button className="dangerBtn" onClick={() => deleteProperty(i)}>{t.delete}</button>
+                      <button
+  onClick={() =>
+    editProperty(
+      properties.findIndex(
+        (property) =>
+          property.name === p.name && property.address === p.address
+      )
+    )
+  }
+>
+  {t.edit}
+</button>
+
+<button
+  className="dangerBtn"
+  onClick={() =>
+    deleteProperty(
+      properties.findIndex(
+        (property) =>
+          property.name === p.name && property.address === p.address
+      )
+    )
+  }
+>
+  {t.delete}
+</button>
                     </div>
                   ))}
                 </>
@@ -1175,9 +1256,21 @@ const propertyNotesForSelected = selectedProperty
                       <div className="dayNumber">{day}</div>
 
                       {dayItems.map((m, j) => (
-                        <div key={j} className="taskText">
-                          {m.property}: {m.type}
-                        </div>
+                        <div
+  key={j}
+  className="taskText"
+  onClick={() => {
+    const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
+      .replace(/\s+/g, "-")
+      .replace(/[^a-zA-Z0-9-_]/g, "");
+
+    setHighlightMaintenance(maintenanceId);
+    setTab("maintenance");
+  }}
+  style={{ cursor: "pointer" }}
+>
+  {m.property}: {m.type}
+</div>
                       ))}
                     </div>
                   );
@@ -1233,13 +1326,30 @@ const propertyNotesForSelected = selectedProperty
         </div>
 
         <div className="nav navSix">
-          <button className={tab === "home" ? "active" : ""} onClick={() => setTab("home")}>🏠<span>{t.home}</span></button>
-          <button className={tab === "properties" ? "active" : ""} onClick={() => setTab("properties")}>🏢<span>{t.props}</span></button>
-          <button className={tab === "maintenance" ? "active" : ""} onClick={() => setTab("maintenance")}>🔧<span>{t.maint}</span></button>
-          <button className={tab === "calendar" ? "active" : ""} onClick={() => setTab("calendar")}>📅<span>{t.calendar}</span></button>
-          <button className={tab === "contacts" ? "active" : ""} onClick={() => setTab("contacts")}>📞<span>{t.contacts}</span></button>
-          <button className={tab === "documents" ? "active" : ""} onClick={() => setTab("documents")}>📄<span>{t.documents}</span></button>
-        </div>
+  <button className={tab === "home" ? "active" : ""} onClick={() => openTab("home")}>
+    🏠<span>{t.home}</span>
+  </button>
+
+  <button className={tab === "properties" ? "active" : ""} onClick={() => openTab("properties")}>
+    🏢<span>{t.props}</span>
+  </button>
+
+  <button className={tab === "maintenance" ? "active" : ""} onClick={openMaintenanceTab}>
+    🔧<span>{t.maint}</span>
+  </button>
+
+  <button className={tab === "calendar" ? "active" : ""} onClick={() => openTab("calendar")}>
+    📅<span>{t.calendar}</span>
+  </button>
+
+  <button className={tab === "contacts" ? "active" : ""} onClick={() => openTab("contacts")}>
+    📞<span>{t.contacts}</span>
+  </button>
+
+  <button className={tab === "documents" ? "active" : ""} onClick={() => openTab("documents")}>
+    📄<span>{t.documents}</span>
+  </button>
+</div>
       </div>
     </div>
   );
