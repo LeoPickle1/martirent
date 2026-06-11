@@ -985,7 +985,7 @@ const propertyNotesForSelected = selectedProperty
                 </button>
               )}
 
-              <div className="statsGrid">
+              <div className="statsGrid statsGridTwo">
   <div
     className="statCard"
     onClick={() => setTab("properties")}
@@ -1000,17 +1000,11 @@ const propertyNotesForSelected = selectedProperty
     onClick={() => setTab("maintenance")}
     style={{ cursor: "pointer" }}
   >
-    <strong>{maintenance.length}</strong>
-    <p>{t.maintenance}</p>
-  </div>
-
-  <div
-    className="statCard dangerText"
-    onClick={() => setTab("maintenance")}
-    style={{ cursor: "pointer" }}
-  >
-    <strong>{overdue.length}</strong>
-    <p>{t.overdue}</p>
+    <strong>
+      {maintenance.length}
+      <span className="overdueSmall"> / {overdue.length}</span>
+    </strong>
+    <p>{t.maintenance} / {t.overdue}</p>
   </div>
 </div>
 
