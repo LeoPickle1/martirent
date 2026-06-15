@@ -361,3 +361,29 @@ body,
   font-size: 14px;
   color: #333;
 }
+.formCard {
+  border-left: 6px solid #b30000;
+}
+
+.formCard label {
+  display: block;
+  font-weight: 700;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+.formInput {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  font-size: 15px;
+  margin-bottom: 8px;
+  background: white;
+}
+
+.formButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}

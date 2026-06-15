@@ -5,6 +5,36 @@ import "./App.css";
 export default function App() {
   const [tab, setTab] = useState("home");
   const [search, setSearch] = useState("");
+  const [maintenanceFormOpen, setMaintenanceFormOpen] = useState(false);
+const [editingMaintenanceIndex, setEditingMaintenanceIndex] = useState(null);
+const [maintenanceForm, setMaintenanceForm] = useState({
+  property: "",
+  type: "",
+  company: "",
+  lastDone: "",
+  intervalYears: "",
+  warningDays: "",
+});
+  const [propertyFormOpen, setPropertyFormOpen] = useState(false);
+const [editingPropertyIndex, setEditingPropertyIndex] = useState(null);
+const [propertyForm, setPropertyForm] = useState({
+  name: "",
+  address: "",
+});
+  const [documentFormOpen, setDocumentFormOpen] = useState(false);
+  const [contactFormOpen, setContactFormOpen] = useState(false);
+const [editingContactIndex, setEditingContactIndex] = useState(null);
+const [contactForm, setContactForm] = useState({
+  company: "",
+  phone: "",
+  email: "",
+  website: "",
+});
+const [editingDocumentIndex, setEditingDocumentIndex] = useState(null);
+const [documentForm, setDocumentForm] = useState({
+  name: "",
+  type: "",
+}); 
   const [calendarOffset, setCalendarOffset] = useState(0);
   const [appNotice, setAppNotice] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(null);
@@ -175,6 +205,13 @@ useEffect(() => {
 }, [maintenance, hasLoadedBackend]);
   useEffect(() => localStorage.setItem("documents", JSON.stringify(documents)), [documents]);
   useEffect(() => localStorage.setItem("contacts", JSON.stringify(contacts)), [contacts]);
+  useEffect(() => {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js").catch((error) => {
+      console.error("Service worker registration failed:", error);
+    });
+  }
+}, []);
 useEffect(() => {
   const content = document.querySelector(".content");
 
@@ -589,31 +626,50 @@ const enableNotifications = async () => {
 };
 
   const addProperty = () => {
-  const name = prompt(t.propertyNameQuestion);
-  if (name === null) return;
-
-  const address = prompt(t.addressQuestion);
-  if (address === null) return;
-
-  if (!name || !address) return;
-
-  setProperties((prev) => [...prev, { name, address }]);
+  setEditingPropertyIndex(null);
+  setPropertyForm({
+    name: "",
+    address: "",
+  });
+  setPropertyFormOpen(true);
 };
 
   const editProperty = (index) => {
   const current = properties[index];
 
-  const name = prompt(t.propertyNameQuestion, current.name);
-  if (name === null) return;
+  setEditingPropertyIndex(index);
+  setPropertyForm({
+    name: current.name || "",
+    address: current.address || "",
+  });
+  setPropertyFormOpen(true);
+};
+const savePropertyForm = () => {
+  if (!propertyForm.name || !propertyForm.address) return;
 
-  const address = prompt(t.addressQuestion, current.address);
-  if (address === null) return;
+  if (editingPropertyIndex === null) {
+    setProperties((prev) => [...prev, propertyForm]);
+  } else {
+    const updated = [...properties];
+    updated[editingPropertyIndex] = propertyForm;
+    setProperties(updated);
+  }
 
-  if (!name || !address) return;
+  setPropertyFormOpen(false);
+  setEditingPropertyIndex(null);
+  setPropertyForm({
+    name: "",
+    address: "",
+  });
+};
 
-  const updated = [...properties];
-  updated[index] = { name, address };
-  setProperties(updated);
+const cancelPropertyForm = () => {
+  setPropertyFormOpen(false);
+  setEditingPropertyIndex(null);
+  setPropertyForm({
+    name: "",
+    address: "",
+  });
 };
   const deleteProperty = (index) => {
   const confirmDelete = window.confirm(t.deletePropertyConfirm);
@@ -623,57 +679,79 @@ const enableNotifications = async () => {
 };
 
 const addMaintenance = () => {
-  const property = prompt(t.propertyNameQuestion);
-  if (property === null) return;
-
-  const type = prompt(t.maintenanceTypeQuestion);
-  if (type === null) return;
-
-  const company = prompt(t.companyQuestion);
-  if (company === null) return;
-
-  const lastDone = prompt(t.lastDoneQuestion);
-  if (lastDone === null) return;
-
-  const intervalYears = prompt(t.intervalQuestion);
-  if (intervalYears === null) return;
-
-  const warningDays = prompt(t.warningDaysQuestion);
-  if (warningDays === null) return;
-
-  if (!property || !type || !company || !lastDone || !intervalYears || !warningDays) return;
-
-  setMaintenance((prev) => [
-    ...prev,
-    { property, type, company, lastDone, intervalYears, warningDays },
-  ]);
+  setEditingMaintenanceIndex(null);
+  setMaintenanceForm({
+    property: "",
+    type: "",
+    company: "",
+    lastDone: "",
+    intervalYears: "",
+    warningDays: "",
+  });
+  setMaintenanceFormOpen(true);
 };
 const editMaintenance = (index) => {
   const current = maintenance[index];
 
-  const property = prompt(t.propertyNameQuestion, current.property);
-  if (property === null) return;
+  setEditingMaintenanceIndex(index);
+  setMaintenanceForm({
+    property: current.property || "",
+    type: current.type || "",
+    company: current.company || "",
+    lastDone: current.lastDone || "",
+    intervalYears: current.intervalYears || "",
+    warningDays: current.warningDays || "",
+  });
+  setMaintenanceFormOpen(true);
+};
+const saveMaintenanceForm = () => {
+  if (
+    !maintenanceForm.property ||
+    !maintenanceForm.type ||
+    !maintenanceForm.company ||
+    !maintenanceForm.lastDone ||
+    !maintenanceForm.intervalYears ||
+    !maintenanceForm.warningDays
+  ) {
+    return;
+  }
 
-  const type = prompt(t.maintenanceTypeQuestion, current.type);
-  if (type === null) return;
+  if (editingMaintenanceIndex === null) {
+    setMaintenance((prev) => [...prev, maintenanceForm]);
+  } else {
+    const updated = [...maintenance];
 
-  const company = prompt(t.companyQuestion, current.company);
-  if (company === null) return;
+    updated[editingMaintenanceIndex] = {
+      ...updated[editingMaintenanceIndex],
+      ...maintenanceForm,
+    };
 
-  const lastDone = prompt(t.lastDoneQuestion, current.lastDone);
-  if (lastDone === null) return;
+    setMaintenance(updated);
+  }
 
-  const intervalYears = prompt(t.intervalQuestion, current.intervalYears);
-  if (intervalYears === null) return;
+  setMaintenanceFormOpen(false);
+  setEditingMaintenanceIndex(null);
+  setMaintenanceForm({
+    property: "",
+    type: "",
+    company: "",
+    lastDone: "",
+    intervalYears: "",
+    warningDays: "",
+  });
+};
 
-  const warningDays = prompt(t.warningDaysQuestion, current.warningDays);
-  if (warningDays === null) return;
-
-  if (!property || !type || !company || !lastDone || !intervalYears || !warningDays) return;
-
-  const updated = [...maintenance];
-  updated[index] = { property, type, company, lastDone, intervalYears, warningDays };
-  setMaintenance(updated);
+const cancelMaintenanceForm = () => {
+  setMaintenanceFormOpen(false);
+  setEditingMaintenanceIndex(null);
+  setMaintenanceForm({
+    property: "",
+    type: "",
+    company: "",
+    lastDone: "",
+    intervalYears: "",
+    warningDays: "",
+  });
 };
 const completeMaintenance = (index) => {
   const confirmComplete = window.confirm(t.completeMaintenanceConfirm);
@@ -710,17 +788,50 @@ const deleteMaintenance = (index) => {
  
 
   const addDocument = () => {
-  const name = prompt(t.documentNameQuestion);
-  if (name === null) return;
+  setEditingDocumentIndex(null);
+  setDocumentForm({
+    name: "",
+    type: "",
+  });
+  setDocumentFormOpen(true);
+};
+const editDocument = (index) => {
+  const current = documents[index];
 
-  const type = prompt(t.typeNotesQuestion);
-  if (type === null) return;
+  setEditingDocumentIndex(index);
+  setDocumentForm({
+    name: current.name || "",
+    type: current.type || "",
+  });
+  setDocumentFormOpen(true);
+};
+const saveDocumentForm = () => {
+  if (!documentForm.name || !documentForm.type) return;
 
-  if (!name || !type) return;
+  if (editingDocumentIndex === null) {
+    setDocuments((prev) => [...prev, documentForm]);
+  } else {
+    const updated = [...documents];
+    updated[editingDocumentIndex] = documentForm;
+    setDocuments(updated);
+  }
 
-  setDocuments((prev) => [...prev, { name, type }]);
+  setDocumentFormOpen(false);
+  setEditingDocumentIndex(null);
+  setDocumentForm({
+    name: "",
+    type: "",
+  });
 };
 
+const cancelDocumentForm = () => {
+  setDocumentFormOpen(false);
+  setEditingDocumentIndex(null);
+  setDocumentForm({
+    name: "",
+    type: "",
+  });
+};
   const deleteDocument = (index) => {
   const confirmDelete = window.confirm(t.deleteDocumentConfirm);
   if (!confirmDelete) return;
@@ -729,33 +840,58 @@ const deleteMaintenance = (index) => {
 };
 
   const addContact = () => {
-    const company = prompt(t.companyQuestion);
-    if (company === null) return;
-    if (!company) return;
-
-    const phone = prompt(t.phoneQuestion) || "";
-    const email = prompt(t.emailQuestion) || "";
-    const website = prompt(t.websiteQuestion) || "";
-
-    setContacts((prev) => [...prev, { company, phone, email, website }]);
-  };
-
+  setEditingContactIndex(null);
+  setContactForm({
+    company: "",
+    phone: "",
+    email: "",
+    website: "",
+  });
+  setContactFormOpen(true);
+};
   const editContact = (index) => {
-    const current = contacts[index];
+  const current = contacts[index];
 
-    const company = prompt(t.companyQuestion, current.company);
-    if (company === null) return;
-    if (!company) return;
+  setEditingContactIndex(index);
+  setContactForm({
+    company: current.company || "",
+    phone: current.phone || "",
+    email: current.email || "",
+    website: current.website || "",
+  });
+  setContactFormOpen(true);
+};
+const saveContactForm = () => {
+  if (!contactForm.company) return;
 
-    const phone = prompt(t.phoneQuestion, current.phone) || "";
-    const email = prompt(t.emailQuestion, current.email) || "";
-    const website = prompt(t.websiteQuestion, current.website) || "";
-
+  if (editingContactIndex === null) {
+    setContacts((prev) => [...prev, contactForm]);
+  } else {
     const updated = [...contacts];
-    updated[index] = { company, phone, email, website };
+    updated[editingContactIndex] = contactForm;
     setContacts(updated);
-  };
+  }
 
+  setContactFormOpen(false);
+  setEditingContactIndex(null);
+  setContactForm({
+    company: "",
+    phone: "",
+    email: "",
+    website: "",
+  });
+};
+
+const cancelContactForm = () => {
+  setContactFormOpen(false);
+  setEditingContactIndex(null);
+  setContactForm({
+    company: "",
+    phone: "",
+    email: "",
+    website: "",
+  });
+};
   const deleteContact = (index) => {
     const confirmDelete = window.confirm(t.deleteContactConfirm);
     if (!confirmDelete) return;
@@ -1176,7 +1312,49 @@ setTab("properties");
                     <h2>{t.properties}</h2>
                     <button className="primaryBtn" onClick={addProperty}>+ {t.add}</button>
                   </div>
+{propertyFormOpen && (
+  <div className="card formCard">
+    <h3>
+      {editingPropertyIndex === null ? `+ ${t.add}` : t.edit} {t.properties}
+    </h3>
 
+    <label>{t.properties}</label>
+    <input
+      className="formInput"
+      value={propertyForm.name}
+      onChange={(e) =>
+        setPropertyForm({
+          ...propertyForm,
+          name: e.target.value,
+        })
+      }
+      placeholder={t.propertyNameQuestion}
+    />
+
+    <label>{t.address}</label>
+    <input
+      className="formInput"
+      value={propertyForm.address}
+      onChange={(e) =>
+        setPropertyForm({
+          ...propertyForm,
+          address: e.target.value,
+        })
+      }
+      placeholder={t.addressQuestion}
+    />
+
+    <div className="formButtons">
+      <button className="primaryBtn" onClick={savePropertyForm}>
+        {editingPropertyIndex === null ? t.add : t.edit}
+      </button>
+
+      <button onClick={cancelPropertyForm}>
+        {language === "en" ? "Cancel" : "Abbrechen"}
+      </button>
+    </div>
+  </div>
+)}
                   {filteredProperties.map((p, i) => (
                     <div className="card" key={i}>
                       <h3>{p.name}</h3>
@@ -1258,7 +1436,109 @@ setTab("properties");
                 <h2>{t.maintenance}</h2>
                 <button className="primaryBtn" onClick={addMaintenance}>+ {t.add}</button>
               </div>
+{maintenanceFormOpen && (
+  <div className="card formCard">
+    <h3>
+      {editingMaintenanceIndex === null ? `+ ${t.add}` : t.edit} {t.maintenance}
+    </h3>
 
+    <label>{t.properties}</label>
+    <select
+      className="formInput"
+      value={maintenanceForm.property}
+      onChange={(e) =>
+        setMaintenanceForm({
+          ...maintenanceForm,
+          property: e.target.value,
+        })
+      }
+    >
+      <option value="">{language === "en" ? "Choose property" : "Immobilie wählen"}</option>
+      {properties.map((p, i) => (
+        <option key={i} value={p.name}>
+          {p.name}
+        </option>
+      ))}
+    </select>
+
+    <label>{language === "en" ? "Maintenance Type" : "Unterhaltsart"}</label>
+    <input
+      className="formInput"
+      value={maintenanceForm.type}
+      onChange={(e) =>
+        setMaintenanceForm({
+          ...maintenanceForm,
+          type: e.target.value,
+        })
+      }
+      placeholder={t.maintenanceTypeQuestion}
+    />
+
+    <label>{t.company}</label>
+    <input
+      className="formInput"
+      value={maintenanceForm.company}
+      onChange={(e) =>
+        setMaintenanceForm({
+          ...maintenanceForm,
+          company: e.target.value,
+        })
+      }
+      placeholder={t.companyQuestion}
+    />
+
+    <label>{t.lastDone}</label>
+    <input
+      className="formInput"
+      type="date"
+      value={maintenanceForm.lastDone}
+      onChange={(e) =>
+        setMaintenanceForm({
+          ...maintenanceForm,
+          lastDone: e.target.value,
+        })
+      }
+    />
+
+    <label>{language === "en" ? "Interval in years" : "Intervall in Jahren"}</label>
+    <input
+      className="formInput"
+      type="number"
+      value={maintenanceForm.intervalYears}
+      onChange={(e) =>
+        setMaintenanceForm({
+          ...maintenanceForm,
+          intervalYears: e.target.value,
+        })
+      }
+      placeholder="1"
+    />
+
+    <label>{language === "en" ? "Warning days before due" : "Tage vorher warnen"}</label>
+    <input
+      className="formInput"
+      type="number"
+      value={maintenanceForm.warningDays}
+      onChange={(e) =>
+        setMaintenanceForm({
+          ...maintenanceForm,
+          warningDays: e.target.value,
+        })
+      }
+      placeholder="30"
+    />
+
+    <div className="formButtons">
+      <button className="primaryBtn" onClick={saveMaintenanceForm}>
+        {editingMaintenanceIndex === null ? t.add : t.edit}
+      </button>
+
+      <button onClick={cancelMaintenanceForm}>
+        {language === "en" ? "Cancel" : "Abbrechen"}
+      </button>
+    </div>
+  </div>
+)}
               {filteredItems.map(renderItem)}
             </>
           )}
@@ -1320,7 +1600,75 @@ setTab("properties");
         + {t.add}
       </button>
     </div>
+{contactFormOpen && (
+  <div className="card formCard">
+    <h3>
+      {editingContactIndex === null ? `+ ${t.add}` : t.edit} {t.contacts}
+    </h3>
 
+    <label>{t.company}</label>
+    <input
+      className="formInput"
+      value={contactForm.company}
+      onChange={(e) =>
+        setContactForm({
+          ...contactForm,
+          company: e.target.value,
+        })
+      }
+      placeholder={t.companyQuestion}
+    />
+
+    <label>{t.phone}</label>
+    <input
+      className="formInput"
+      value={contactForm.phone}
+      onChange={(e) =>
+        setContactForm({
+          ...contactForm,
+          phone: e.target.value,
+        })
+      }
+      placeholder={t.phoneQuestion}
+    />
+
+    <label>{t.email}</label>
+    <input
+      className="formInput"
+      value={contactForm.email}
+      onChange={(e) =>
+        setContactForm({
+          ...contactForm,
+          email: e.target.value,
+        })
+      }
+      placeholder={t.emailQuestion}
+    />
+
+    <label>{t.website}</label>
+    <input
+      className="formInput"
+      value={contactForm.website}
+      onChange={(e) =>
+        setContactForm({
+          ...contactForm,
+          website: e.target.value,
+        })
+      }
+      placeholder={t.websiteQuestion}
+    />
+
+    <div className="formButtons">
+      <button className="primaryBtn" onClick={saveContactForm}>
+        {editingContactIndex === null ? t.add : t.edit}
+      </button>
+
+      <button onClick={cancelContactForm}>
+        {language === "en" ? "Cancel" : "Abbrechen"}
+      </button>
+    </div>
+  </div>
+)}
     {filteredContacts.map((c, i) => (
       <div className="card" key={i}>
         <h3>{c.company}</h3>
@@ -1346,14 +1694,75 @@ setTab("properties");
                 <h2>{t.documents}</h2>
                 <button className="primaryBtn" onClick={addDocument}>+ {t.add}</button>
               </div>
+{documentFormOpen && (
+  <div className="card formCard">
+    <h3>
+      {editingDocumentIndex === null
+        ? `+ ${t.add}`
+        : t.edit}{" "}
+      {t.documents}
+    </h3>
 
-              {filteredDocuments.map((d, i) => (
-                <div className="card" key={i}>
-                  <h3>📄 {d.name}</h3>
-                  <p className="muted">{d.type}</p>
-                  <button className="dangerBtn" onClick={() => deleteDocument(i)}>{t.delete}</button>
-                </div>
-              ))}
+    <label>Document / Company Name</label>
+    <input
+      className="formInput"
+      value={documentForm.name}
+      onChange={(e) =>
+        setDocumentForm({
+          ...documentForm,
+          name: e.target.value,
+        })
+      }
+      placeholder={t.documentNameQuestion}
+    />
+
+    <label>Type / Notes</label>
+    <input
+      className="formInput"
+      value={documentForm.type}
+      onChange={(e) =>
+        setDocumentForm({
+          ...documentForm,
+          type: e.target.value,
+        })
+      }
+      placeholder={t.typeNotesQuestion}
+    />
+
+    <div className="formButtons">
+      <button className="primaryBtn" onClick={saveDocumentForm}>
+        {editingDocumentIndex === null ? t.add : t.edit}
+      </button>
+
+      <button onClick={cancelDocumentForm}>
+        {language === "en" ? "Cancel" : "Abbrechen"}
+      </button>
+    </div>
+  </div>
+)}
+              {filteredDocuments.map((d, i) => {
+  const originalIndex = documents.findIndex(
+    (doc) => doc.name === d.name && doc.type === d.type
+  );
+
+  return (
+    <div className="card" key={i}>
+      <h3>📄 {d.name}</h3>
+      <p className="muted">{d.type}</p>
+
+      <button onClick={() => editDocument(originalIndex)}>
+        {t.edit}
+      </button>
+
+      <button
+        className="dangerBtn"
+        onClick={() => deleteDocument(originalIndex)}
+      >
+        {t.delete}
+      </button>
+    </div>
+  );
+})}
             </>
           )}
         </div>
