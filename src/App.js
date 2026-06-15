@@ -494,7 +494,7 @@ useEffect(() => {
 
   const overdue = filteredItems.filter((m) => m.status === "overdue");
   const dueSoon = filteredItems.filter((m) => m.status === "warning");
-  const attentionItems = [...overdue, ...dueSoon].slice(0, 3);
+  const attentionItems = [...overdue, ...dueSoon].sort((a, b) => a.days - b.days);
 
   const today = new Date();
   const calendarDate = new Date(today.getFullYear(), today.getMonth() + calendarOffset, 1);
@@ -682,9 +682,13 @@ const completeMaintenance = (index) => {
   const today = new Date().toISOString().split("T")[0];
 
   const updated = [...maintenance];
+
+  const oldHistory = updated[index].history || [];
+
   updated[index] = {
     ...updated[index],
     lastDone: today,
+    history: [...oldHistory, today],
   };
 
   setMaintenance(updated);
@@ -867,7 +871,9 @@ const openMaintenanceTab = () => {
   const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
     .replace(/\s+/g, "-")
     .replace(/[^a-zA-Z0-9-_]/g, "");
-
+const historyDates = Array.from(
+  new Set([...(m.history || []), m.lastDone].filter(Boolean))
+).reverse();
   return (
     <div className={`card ${m.status}`} id={maintenanceId} key={i}>
       <h3>{m.type}</h3>
@@ -876,7 +882,20 @@ const openMaintenanceTab = () => {
       <p><b>{t.lastDone}:</b> {m.lastDone}</p>
       <p><b>{t.nextDue}:</b> {m.nextDue}</p>
       <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
+{m.history && m.history.length > 0 && (
+  <div className="historyBox">
+    <p><b>{language === "en" ? "History" : "Verlauf"}:</b></p>
 
+    {m.history
+      .slice()
+      .reverse()
+      .map((date, index) => (
+        <p key={index} className="historyDate">
+          ✅ {date}
+        </p>
+      ))}
+  </div>
+)}
       <button className="primaryBtn" onClick={() => completeMaintenance(originalIndex)}>
         ✓ {t.complete}
       </button>
