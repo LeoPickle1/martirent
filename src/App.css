@@ -387,3 +387,21 @@ body,
   gap: 8px;
   margin-top: 10px;
 }
+.offlineNotice {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #222;
+  color: white;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+
+.darkMode .offlineNotice {
+  background: #b30000;
+  color: white;
+}

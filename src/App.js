@@ -4,6 +4,7 @@ import "./App.css";
 
 export default function App() {
   const [tab, setTab] = useState("home");
+  const [offlineNotice, setOfflineNotice] = useState(false);
   const [search, setSearch] = useState("");
   const [maintenanceFormOpen, setMaintenanceFormOpen] = useState(false);
 const [editingMaintenanceIndex, setEditingMaintenanceIndex] = useState(null);
@@ -205,6 +206,52 @@ useEffect(() => {
 }, [maintenance, hasLoadedBackend]);
   useEffect(() => localStorage.setItem("documents", JSON.stringify(documents)), [documents]);
   useEffect(() => localStorage.setItem("contacts", JSON.stringify(contacts)), [contacts]);
+ useEffect(() => {
+  if (!navigator.onLine) {
+    setOfflineNotice(true);
+
+    setTimeout(() => {
+      setOfflineNotice(false);
+    }, 2000);
+  }
+
+  const handleOffline = () => {
+    setOfflineNotice(true);
+
+    setTimeout(() => {
+      setOfflineNotice(false);
+    }, 2000);
+  };
+
+  window.addEventListener("offline", handleOffline);
+
+  return () => {
+    window.removeEventListener("offline", handleOffline);
+  };
+}, []);
+useEffect(() => {
+  if (!navigator.onLine) {
+    setOfflineNotice(true);
+
+    setTimeout(() => {
+      setOfflineNotice(false);
+    }, 2000);
+  }
+
+  const handleOffline = () => {
+    setOfflineNotice(true);
+
+    setTimeout(() => {
+      setOfflineNotice(false);
+    }, 2000);
+  };
+
+  window.addEventListener("offline", handleOffline);
+
+  return () => {
+    window.removeEventListener("offline", handleOffline);
+  };
+}, []);
   useEffect(() => {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch((error) => {
@@ -1091,7 +1138,11 @@ const historyDates = Array.from(
               <p>{appNotice}</p>
             </div>
           )}
-
+{offlineNotice && (
+  <div className="offlineNotice">
+    {language === "en" ? "You are offline" : "Du bist offline"}
+  </div>
+)}
           {tab === "home" && (
             <>
               <div className="sectionTop">
