@@ -4,6 +4,58 @@ import "./App.css";
 
 export default function App() {
   const [tab, setTab] = useState("home");
+  const maintenanceTypes = [
+  "Ash Inspection",
+  "Chimney Sweep",
+  "Furnace Inspection",
+  "Heating Service",
+  "Fire Extinguisher",
+  "Garden",
+  "FUEKO",
+  "Roof Inspection",
+  "SiNa",
+  "Tank Inspection",
+  "Boiler",
+  "Heat Pump Check",
+  "Boiler Descaling OG",
+  "Drain Tile",
+  "Floor Heating Flush",
+  "Gravity Lines (Sewer)",
+  "Gutter and Downspout",
+  "Magnet Separator Cleaning",
+  "Tank Leak Indicator",
+  "Boiler Descaling",
+].sort();
+const maintenanceTypeNamesDe = {
+  "Ash Inspection": "Aschekontrolle",
+  "Boiler": "Boiler",
+  "Boiler Descaling": "Boiler entkalken",
+  "Boiler Descaling OG": "Boiler entkalken OG",
+  "Chimney Sweep": "Kaminfeger",
+  "Drain Tile": "Sickerleitung",
+  "Fire Extinguisher": "Feuerlöscher",
+  "Floor Heating Flush": "Bodenheizung spülen",
+  "FUEKO": "FEUKO",
+  "Furnace Inspection": "Heizungsprüfung",
+  "Garden": "Garten",
+  "Gravity Lines (Sewer)": "Abwasserleitungen",
+  "Gutter and Downspout": "Dachrinne und Fallrohr",
+  "Heat Pump Check": "Wärmepumpen-Kontrolle",
+  "Heating Service": "Heizungsservice",
+  "Magnet Separator Cleaning": "Magnetabscheider reinigen",
+  "Roof Inspection": "Dachkontrolle",
+  "SiNa": "SiNa",
+  "Tank Inspection": "Tankprüfung",
+  "Tank Leak Indicator": "Tank-Leckanzeige",
+};
+
+const getMaintenanceTypeName = (type) => {
+  if (language === "de") {
+    return maintenanceTypeNamesDe[type] || type;
+  }
+
+  return type;
+};
   const [offlineNotice, setOfflineNotice] = useState(false);
   const [search, setSearch] = useState("");
   const [maintenanceFormOpen, setMaintenanceFormOpen] = useState(false);
@@ -15,6 +67,7 @@ const [maintenanceForm, setMaintenanceForm] = useState({
   lastDone: "",
   intervalYears: "",
   warningDays: "",
+  historyText: "",
 });
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
 const [editingPropertyIndex, setEditingPropertyIndex] = useState(null);
@@ -443,11 +496,36 @@ const todayText = new Date().toLocaleDateString(
     day: "numeric",
   }
 );
+const formatDateDisplay = (dateString) => {
+  if (!dateString) return "-";
+
+  const date = new Date(dateString + "T00:00:00");
+
+  if (Number.isNaN(date.getTime())) return dateString;
+
+  const locale = language === "de" ? "de-CH" : "en-GB";
+
+  return date
+    .toLocaleDateString(locale, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
+    .replace(/\./g, "")
+    .replace(/ /g, "-");
+};
   const addYears = (date, years) => {
-    const d = new Date(date);
-    d.setFullYear(d.getFullYear() + Number(years));
-    return d.toISOString().split("T")[0];
-  };
+  const d = new Date(date + "T00:00:00");
+
+  const interval = Number(years);
+  if (Number.isNaN(interval)) return date;
+
+  const monthsToAdd = Math.round(interval * 12);
+
+  d.setMonth(d.getMonth() + monthsToAdd);
+
+  return d.toISOString().split("T")[0];
+};
 
   const daysUntil = (date) => {
     const today = new Date();
@@ -578,7 +656,9 @@ useEffect(() => {
 
   const overdue = filteredItems.filter((m) => m.status === "overdue");
   const dueSoon = filteredItems.filter((m) => m.status === "warning");
-  const attentionItems = [...overdue, ...dueSoon].sort((a, b) => a.days - b.days);
+  const attentionItems = overdue
+  .sort((a, b) => a.days - b.days)
+  .slice(0, 5);
 
   const today = new Date();
   const calendarDate = new Date(today.getFullYear(), today.getMonth() + calendarOffset, 1);
@@ -727,28 +807,34 @@ const cancelPropertyForm = () => {
 
 const addMaintenance = () => {
   setEditingMaintenanceIndex(null);
-  setMaintenanceForm({
-    property: "",
-    type: "",
-    company: "",
-    lastDone: "",
-    intervalYears: "",
-    warningDays: "",
-  });
+ setMaintenanceForm({
+  property: "",
+  type: "",
+  company: "",
+  lastDone: "",
+  intervalYears: "",
+  warningDays: "",
+  historyText: "",
+});
   setMaintenanceFormOpen(true);
 };
 const editMaintenance = (index) => {
   const current = maintenance[index];
 
   setEditingMaintenanceIndex(index);
-  setMaintenanceForm({
-    property: current.property || "",
-    type: current.type || "",
-    company: current.company || "",
-    lastDone: current.lastDone || "",
-    intervalYears: current.intervalYears || "",
-    warningDays: current.warningDays || "",
-  });
+ const historyDates = Array.from(
+  new Set([...(current.history || []), current.lastDone].filter(Boolean))
+);
+
+setMaintenanceForm({
+  property: current.property || "",
+  type: current.type || "",
+  company: current.company || "",
+  lastDone: current.lastDone || "",
+  intervalYears: current.intervalYears || "",
+  warningDays: current.warningDays || "",
+  historyText: historyDates.join("\n"),
+});
   setMaintenanceFormOpen(true);
 };
 const saveMaintenanceForm = () => {
@@ -763,42 +849,59 @@ const saveMaintenanceForm = () => {
     return;
   }
 
-  if (editingMaintenanceIndex === null) {
-    setMaintenance((prev) => [...prev, maintenanceForm]);
-  } else {
-    const updated = [...maintenance];
+ const history = maintenanceForm.historyText
+  .split("\n")
+  .map((date) => date.trim())
+  .filter(Boolean);
 
-    updated[editingMaintenanceIndex] = {
-      ...updated[editingMaintenanceIndex],
-      ...maintenanceForm,
-    };
+const savedMaintenance = {
+  property: maintenanceForm.property,
+  type: maintenanceForm.type,
+  company: maintenanceForm.company,
+  lastDone: maintenanceForm.lastDone,
+  intervalYears: maintenanceForm.intervalYears,
+  warningDays: maintenanceForm.warningDays,
+  history,
+};
 
-    setMaintenance(updated);
-  }
+if (editingMaintenanceIndex === null) {
+  setMaintenance((prev) => [...prev, savedMaintenance]);
+} else {
+  const updated = [...maintenance];
+
+  updated[editingMaintenanceIndex] = {
+    ...updated[editingMaintenanceIndex],
+    ...savedMaintenance,
+  };
+
+  setMaintenance(updated);
+}
 
   setMaintenanceFormOpen(false);
   setEditingMaintenanceIndex(null);
   setMaintenanceForm({
-    property: "",
-    type: "",
-    company: "",
-    lastDone: "",
-    intervalYears: "",
-    warningDays: "",
-  });
+  property: "",
+  type: "",
+  company: "",
+  lastDone: "",
+  intervalYears: "",
+  warningDays: "",
+  historyText: "",
+});
 };
 
 const cancelMaintenanceForm = () => {
   setMaintenanceFormOpen(false);
   setEditingMaintenanceIndex(null);
   setMaintenanceForm({
-    property: "",
-    type: "",
-    company: "",
-    lastDone: "",
-    intervalYears: "",
-    warningDays: "",
-  });
+  property: "",
+  type: "",
+  company: "",
+  lastDone: "",
+  intervalYears: "",
+  warningDays: "",
+  historyText: "",
+});
 };
 const completeMaintenance = (index) => {
   const confirmComplete = window.confirm(t.completeMaintenanceConfirm);
@@ -1059,11 +1162,11 @@ const historyDates = Array.from(
 ).reverse();
   return (
     <div className={`card ${m.status}`} id={maintenanceId} key={i}>
-      <h3>{m.type}</h3>
+      <h3>{getMaintenanceTypeName(m.type)}</h3>
       <p><b>{t.properties}:</b> {m.property}</p>
       <p><b>{t.company}:</b> {m.company}</p>
-      <p><b>{t.lastDone}:</b> {m.lastDone}</p>
-      <p><b>{t.nextDue}:</b> {m.nextDue}</p>
+      <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
+<p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
       <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
 {m.history && m.history.length > 0 && (
   <div className="historyBox">
@@ -1074,7 +1177,7 @@ const historyDates = Array.from(
       .reverse()
       .map((date, index) => (
         <p key={index} className="historyDate">
-          ✅ {date}
+          ✅ {formatDateDisplay(date)}
         </p>
       ))}
   </div>
@@ -1192,7 +1295,7 @@ setTab("properties");
            onClick={openMaintenanceTab}
             style={{ cursor: "pointer" }}
           >
-            🔧 {m.property}: {m.type} — {m.company}
+            🔧 {m.property}: {getMaintenanceTypeName(m.type)} — {m.company}
           </p>
         ))
       ) : (
@@ -1292,7 +1395,7 @@ setTab("properties");
         setTab("maintenance");
       }}
     >
-      {m.status === "overdue" ? "🚨" : "⚠️"} {m.property}: {m.type}
+      {m.status === "overdue" ? "🚨" : "⚠️"} {m.property}: {getMaintenanceTypeName(m.type)}
     </button>
   );
 })
@@ -1364,7 +1467,9 @@ setTab("properties");
                     <button className="primaryBtn" onClick={addProperty}>+ {t.add}</button>
                   </div>
 {propertyFormOpen && (
-  <div className="card formCard">
+  <>
+    <div className="formOverlay" onClick={cancelPropertyForm}></div>
+    <div className="card formCard">
     <h3>
       {editingPropertyIndex === null ? `+ ${t.add}` : t.edit} {t.properties}
     </h3>
@@ -1404,7 +1509,8 @@ setTab("properties");
         {language === "en" ? "Cancel" : "Abbrechen"}
       </button>
     </div>
-  </div>
+   </div>
+  </>
 )}
                   {filteredProperties.map((p, i) => (
                     <div className="card" key={i}>
@@ -1459,7 +1565,7 @@ setTab("properties");
                       <h3>{m.type}</h3>
                       <p><b>{t.company}:</b> {m.company}</p>
                       <p><b>{t.lastDone}:</b> {m.lastDone}</p>
-                      <p><b>{t.nextDue}:</b> {m.nextDue}</p>
+                      <p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
                       <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
                     </div>
                   )) : (
@@ -1471,7 +1577,7 @@ setTab("properties");
   propertyNotesForSelected.map((n, i) => (
     <div className="card" key={i}>
       <p><b>{t.unit}:</b> {n.unit}</p>
-      <p><b>{t.date}:</b> {n.date}</p>
+      <p><b>{t.date}:</b> {formatDateDisplay(n.date)}</p>
       <p>{language === "en" ? n.note : n.noteDe}</p>
     </div>
   ))
@@ -1488,7 +1594,9 @@ setTab("properties");
                 <button className="primaryBtn" onClick={addMaintenance}>+ {t.add}</button>
               </div>
 {maintenanceFormOpen && (
-  <div className="card formCard">
+  <>
+    <div className="formOverlay" onClick={cancelMaintenanceForm}></div>
+    <div className="card formCard">
     <h3>
       {editingMaintenanceIndex === null ? `+ ${t.add}` : t.edit} {t.maintenance}
     </h3>
@@ -1513,17 +1621,26 @@ setTab("properties");
     </select>
 
     <label>{language === "en" ? "Maintenance Type" : "Unterhaltsart"}</label>
-    <input
-      className="formInput"
-      value={maintenanceForm.type}
-      onChange={(e) =>
-        setMaintenanceForm({
-          ...maintenanceForm,
-          type: e.target.value,
-        })
-      }
-      placeholder={t.maintenanceTypeQuestion}
-    />
+    <select
+  className="formInput"
+  value={maintenanceForm.type}
+  onChange={(e) =>
+    setMaintenanceForm({
+      ...maintenanceForm,
+      type: e.target.value,
+    })
+  }
+>
+  <option value="">
+    {language === "en" ? "Choose maintenance type" : "Unterhaltsart wählen"}
+  </option>
+
+  {maintenanceTypes.map((type, i) => (
+    <option key={i} value={type}>
+  {getMaintenanceTypeName(type)}
+</option>
+  ))}
+</select>
 
     <label>{t.company}</label>
     <input
@@ -1551,34 +1668,59 @@ setTab("properties");
       }
     />
 
-    <label>{language === "en" ? "Interval in years" : "Intervall in Jahren"}</label>
+    <label>
+  {language === "en"
+    ? "Interval in years"
+    : "Intervall in Jahren"}
+</label>
     <input
-      className="formInput"
-      type="number"
-      value={maintenanceForm.intervalYears}
+  className="formInput"
+  type="number"
+  step="0.01"
+  onWheel={(e) => e.target.blur()}
+  value={maintenanceForm.intervalYears}
       onChange={(e) =>
         setMaintenanceForm({
           ...maintenanceForm,
           intervalYears: e.target.value,
         })
       }
-      placeholder="1"
+      placeholder="0.5 = 6 months"
     />
 
-    <label>{language === "en" ? "Warning days before due" : "Tage vorher warnen"}</label>
-    <input
-      className="formInput"
-      type="number"
-      value={maintenanceForm.warningDays}
-      onChange={(e) =>
-        setMaintenanceForm({
-          ...maintenanceForm,
-          warningDays: e.target.value,
-        })
-      }
-      placeholder="30"
-    />
+    
+<label>{language === "en" ? "Warning days before due" : "Tage vorher warnen"}</label>
+<input
+  className="formInput"
+  type="number"
+  onWheel={(e) => e.target.blur()}
+  value={maintenanceForm.warningDays}
+  onChange={(e) =>
+    setMaintenanceForm({
+      ...maintenanceForm,
+      warningDays: e.target.value,
+    })
+  }
+  placeholder="30"
+/>
 
+<label>{language === "en" ? "History dates" : "Verlauf-Daten"}</label>
+<textarea
+  className="formInput"
+  rows="4"
+  value={maintenanceForm.historyText}
+  onChange={(e) =>
+    setMaintenanceForm({
+      ...maintenanceForm,
+      historyText: e.target.value,
+    })
+  }
+  placeholder={
+    language === "en"
+      ? "One date per line, example: 2024-05-10"
+      : "Ein Datum pro Zeile, Beispiel: 2024-05-10"
+  }
+/>
     <div className="formButtons">
       <button className="primaryBtn" onClick={saveMaintenanceForm}>
         {editingMaintenanceIndex === null ? t.add : t.edit}
@@ -1588,7 +1730,8 @@ setTab("properties");
         {language === "en" ? "Cancel" : "Abbrechen"}
       </button>
     </div>
-  </div>
+    </div>
+  </>
 )}
               {filteredItems.map(renderItem)}
             </>
@@ -1633,7 +1776,7 @@ setTab("properties");
   }}
   style={{ cursor: "pointer" }}
 >
-  {m.property}: {m.type}
+  {m.property}: {getMaintenanceTypeName(m.type)}
 </div>
                       ))}
                     </div>
@@ -1652,7 +1795,9 @@ setTab("properties");
       </button>
     </div>
 {contactFormOpen && (
-  <div className="card formCard">
+  <>
+    <div className="formOverlay" onClick={cancelContactForm}></div>
+    <div className="card formCard">
     <h3>
       {editingContactIndex === null ? `+ ${t.add}` : t.edit} {t.contacts}
     </h3>
@@ -1718,7 +1863,8 @@ setTab("properties");
         {language === "en" ? "Cancel" : "Abbrechen"}
       </button>
     </div>
-  </div>
+   </div>
+  </>
 )}
     {filteredContacts.map((c, i) => (
       <div className="card" key={i}>
@@ -1746,7 +1892,9 @@ setTab("properties");
                 <button className="primaryBtn" onClick={addDocument}>+ {t.add}</button>
               </div>
 {documentFormOpen && (
-  <div className="card formCard">
+  <>
+    <div className="formOverlay" onClick={cancelDocumentForm}></div>
+    <div className="card formCard">
     <h3>
       {editingDocumentIndex === null
         ? `+ ${t.add}`
@@ -1789,7 +1937,8 @@ setTab("properties");
         {language === "en" ? "Cancel" : "Abbrechen"}
       </button>
     </div>
-  </div>
+   </div>
+  </>
 )}
               {filteredDocuments.map((d, i) => {
   const originalIndex = documents.findIndex(

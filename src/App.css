@@ -362,7 +362,18 @@ body,
   color: #333;
 }
 .formCard {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  
+  width: 340px;
+  max-height: 75vh;
+  overflow-y: auto;
+
+  z-index: 999;
   border-left: 6px solid #b30000;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.35);
 }
 
 .formCard label {
@@ -404,4 +415,20 @@ body,
 .darkMode .offlineNotice {
   background: #b30000;
   color: white;
+}
+.formOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: 998;
+}
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
