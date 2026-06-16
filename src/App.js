@@ -1166,7 +1166,7 @@ const historyDates = Array.from(
       <p><b>{t.properties}:</b> {m.property}</p>
       <p><b>{t.company}:</b> {m.company}</p>
       <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
-<p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
+<p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
       <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
 {m.history && m.history.length > 0 && (
   <div className="historyBox">
@@ -1565,7 +1565,7 @@ setTab("properties");
                       <h3>{m.type}</h3>
                       <p><b>{t.company}:</b> {m.company}</p>
                       <p><b>{t.lastDone}:</b> {m.lastDone}</p>
-                      <p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
+                      <p><b>{t.nextDue}:</b> {formatDateDisplay(t.nextDue)}</p>
                       <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
                     </div>
                   )) : (
