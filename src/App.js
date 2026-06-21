@@ -67,6 +67,8 @@ const [maintenanceForm, setMaintenanceForm] = useState({
   lastDone: "",
   intervalYears: "",
   warningDays: "",
+  notesEn: "",
+  notesDe: "",
   historyText: "",
 });
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
@@ -807,15 +809,19 @@ const cancelPropertyForm = () => {
 
 const addMaintenance = () => {
   setEditingMaintenanceIndex(null);
- setMaintenanceForm({
-  property: "",
-  type: "",
-  company: "",
-  lastDone: "",
-  intervalYears: "",
-  warningDays: "",
-  historyText: "",
-});
+
+  setMaintenanceForm({
+    property: "",
+    type: "",
+    company: "",
+    lastDone: "",
+    intervalYears: "",
+    warningDays: "",
+    notesEn: "",
+    notesDe: "",
+    historyText: "",
+  });
+
   setMaintenanceFormOpen(true);
 };
 const editMaintenance = (index) => {
@@ -833,6 +839,8 @@ setMaintenanceForm({
   lastDone: current.lastDone || "",
   intervalYears: current.intervalYears || "",
   warningDays: current.warningDays || "",
+  notesEn: current.notesEn || "",
+  notesDe: current.notesDe || current.notes || "",
   historyText: historyDates.join("\n"),
 });
   setMaintenanceFormOpen(true);
@@ -861,6 +869,8 @@ const savedMaintenance = {
   lastDone: maintenanceForm.lastDone,
   intervalYears: maintenanceForm.intervalYears,
   warningDays: maintenanceForm.warningDays,
+  notesEn: maintenanceForm.notesEn,
+  notesDe: maintenanceForm.notesDe,
   history,
 };
 
@@ -886,6 +896,8 @@ if (editingMaintenanceIndex === null) {
   lastDone: "",
   intervalYears: "",
   warningDays: "",
+  notesEn: "",
+notesDe: "",
   historyText: "",
 });
 };
@@ -900,6 +912,8 @@ const cancelMaintenanceForm = () => {
   lastDone: "",
   intervalYears: "",
   warningDays: "",
+  notesEn: "",
+notesDe: "",
   historyText: "",
 });
 };
@@ -1168,6 +1182,14 @@ const historyDates = Array.from(
       <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
 <p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
       <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
+      {(language === "en" ? m.notesEn : m.notesDe || m.notes) && (
+  <div className="historyBox">
+    <p><b>{language === "en" ? "Notes" : "Notizen"}:</b></p>
+    <p className="historyDate">
+      {language === "en" ? m.notesEn : m.notesDe || m.notes}
+    </p>
+  </div>
+)}
 {m.history && m.history.length > 0 && (
   <div className="historyBox">
     <p><b>{language === "en" ? "History" : "Verlauf"}:</b></p>
@@ -1703,7 +1725,33 @@ setTab("properties");
   }
   placeholder="30"
 />
+<label>Notes English</label>
+<textarea
+  className="formInput"
+  rows="4"
+  value={maintenanceForm.notesEn}
+  onChange={(e) =>
+    setMaintenanceForm({
+      ...maintenanceForm,
+      notesEn: e.target.value,
+    })
+  }
+  placeholder="Example: Every 2 years, together with chimney..."
+/>
 
+<label>Notizen Deutsch</label>
+<textarea
+  className="formInput"
+  rows="4"
+  value={maintenanceForm.notesDe}
+  onChange={(e) =>
+    setMaintenanceForm({
+      ...maintenanceForm,
+      notesDe: e.target.value,
+    })
+  }
+  placeholder="Beispiel: Alle 2 Jahre, zusammen mit Kamin..."
+/>
 <label>{language === "en" ? "History dates" : "Verlauf-Daten"}</label>
 <textarea
   className="formInput"
