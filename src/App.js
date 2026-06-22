@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import emailjs from "@emailjs/browser";
 import "./App.css";
+import { importedContacts } from "./contactsData";
 const maintenanceExtraNotes = {
   "Sempach|SiNa": {
     de: "SiNa: Periodische Kontrolle am 10.10.2024 durch Elektro-Team Eich. SiNa Bericht pendent.",
@@ -348,15 +349,19 @@ const [hasLoadedBackend, setHasLoadedBackend] = useState(false);
   });
 
   const [contacts, setContacts] = useState(() => {
-    const saved = localStorage.getItem("contacts");
-    return saved ? JSON.parse(saved) : [
-      { company: "Felix Weber", phone: "", email: "", website: "" },
-      { company: "Frutiger-Zbinden", phone: "", email: "", website: "" },
-      { company: "GT Estermann", phone: "", email: "", website: "" },
-      { company: "Alpha Control", phone: "", email: "", website: "" },
-      { company: "Meier-Tobler", phone: "", email: "", website: "" },
-    ];
+  const saved = localStorage.getItem("contacts");
+  const savedContacts = saved ? JSON.parse(saved) : [];
+
+  const allContacts = [...savedContacts, ...importedContacts];
+  const seen = new Set();
+
+  return allContacts.filter((contact) => {
+    const key = `${contact.company || ""}|${contact.person || ""}|${contact.email || ""}|${contact.phone || ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
+});
 const propertyNotes = [
   {
     property: "Hilterfingen",
@@ -1519,7 +1524,7 @@ const historyDates = Array.from(
     </button>
   </div>
 </div>
-{search && (
+{search ? (
   <>
 <h3>{t.searchResults}</h3>
     <div className="card">
@@ -1594,7 +1599,8 @@ setTab("properties");
       )}
     </div>
   </>
-)}
+) : (
+  <>
 
 
               <div className="heroCard">
@@ -1713,6 +1719,8 @@ setTab("properties");
     onChange={importBackup}
   />
 </div>
+  </>
+)}
 </>
           )}
           
