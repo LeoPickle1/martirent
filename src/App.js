@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import emailjs from "@emailjs/browser";
 import "./App.css";
-import logo from "./images/logo.png";
+
 export default function App() {
  
   const [tab, setTab] = useState("home");
@@ -1235,7 +1235,7 @@ const historyDates = Array.from(
   <div>
     <p className="eyebrow">{t.appSubtitle}</p>
     <div className="logoTitle">
-  <img src={logo} alt="MartiRent logo" className="appLogo" />
+ <img src="/logo.png" alt="MartiRent logo" className="appLogo" />
   <h1>MartiRent</h1>
 </div>
   </div>
