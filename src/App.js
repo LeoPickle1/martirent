@@ -1,7 +1,219 @@
 import React, { useState, useEffect } from "react";
 import emailjs from "@emailjs/browser";
 import "./App.css";
+const maintenanceExtraNotes = {
+  "Sempach|SiNa": {
+    de: "SiNa: Periodische Kontrolle am 10.10.2024 durch Elektro-Team Eich. SiNa Bericht pendent.",
+    en: "SiNa: Periodic electrical inspection on 10 Oct 2024 by Elektro-Team Eich. SiNa report pending.",
+  },
 
+  "Langnau|SiNa": {
+    de: "SiNa: Periodische Kontrolle alle 5 Jahre. Letzte Kontrolle 26.07.2025 durch MegaOhm.",
+    en: "SiNa: Periodic electrical inspection every 5 years. Last inspection on 26 Jul 2025 by MegaOhm.",
+  },
+  "Langnau|FUEKO": {
+    de: "FEUKO: Alle 2 Jahre. Kaminfeger Hiltbrunner, letzte Kontrolle 10.03.2025.",
+    en: "FEUKO: Every 2 years. Chimney sweep Hiltbrunner, last inspection on 10 Mar 2025.",
+  },
+  "Langnau|Fire Extinguisher": {
+    de: "Feuerlöscher: Jährlich durch Jomos. Letzte Kontrolle 07.05.2024. Mieter organisiert und bezahlt die Kontrollen. Kopien der Rapporte gehen an Marti.",
+    en: "Fire extinguisher: Yearly by Jomos. Last inspection on 7 May 2024. Tenant organizes and pays for the inspections. Copies of reports go to Marti.",
+  },
+  "Langnau|Chimney Sweep": {
+    de: "Kaminfeger: Jährlich durch Kaminfeger Hiltbrunner. Letzte Kontrolle 14.05.2025. Haus hat Cheminee, Kaminfeger fragen.",
+    en: "Chimney sweep: Yearly by chimney sweep Hiltbrunner. Last inspection on 14 May 2025. House has a fireplace, ask chimney sweep.",
+  },
+  "Langnau|Tank Inspection": {
+    de: "Tankrevision: Tank fällig 27.02.2026.",
+    en: "Tank inspection: Tank due on 27 Feb 2026.",
+  },
+  "Langnau|Tank Leak Indicator": {
+    de: "Leckanzeige: Fällig 27.02.2026. Intervall 2 Jahre.",
+    en: "Leak indicator: Due on 27 Feb 2026. Interval 2 years.",
+  },
+  "Langnau|Heating Service": {
+    de: "Heizung: Öl, 17 kW. Brenner Oertli 2015, Kessel Six Madun 1994. Jährlicher Service durch Meier-Tobler, letzter Service 17.02.2026.",
+    en: "Heating: Oil, 17 kW. Burner Oertli 2015, boiler Six Madun 1994. Yearly service by Meier-Tobler, last service on 17 Feb 2026.",
+  },
+
+  "Hilterfingen|SiNa": {
+    de: "SiNa: Periodische Kontrolle 16.11.2009 durch EM Electrocontrol AG. Schlusskontrolle 14.05.2019 durch EM Electrocontrol AG. Zahlenkombination: PLZ Hilterfingen 3652.",
+    en: "SiNa: Periodic inspection on 16 Nov 2009 by EM Electrocontrol AG. Final inspection on 14 May 2019 by EM Electrocontrol AG. Code: Hilterfingen ZIP code 3652.",
+  },
+  "Hilterfingen|Heat Pump Check": {
+    de: "Wärmepumpe: Liebi Swiss, 2018. Installation durch Frutiger-Zbinden. Bodenheizung in allen Wohnungen. Magnetabscheider eingebaut.",
+    en: "Heat pump: Liebi Swiss, 2018. Installed by Frutiger-Zbinden. Floor heating in all apartments. Magnet separator installed.",
+  },
+  "Hilterfingen|Magnet Separator Cleaning": {
+    de: "Magnetabscheider reinigen und Wasser auffüllen. Bis 2025 nie gemacht. Jährlich durch FZAG. 05.12.2025 gemacht, nächster Termin mit FZAG für Sep. 2026 geplant.",
+    en: "Clean magnet separator and refill water. Never done before 2025. Yearly by FZAG. Done on 5 Dec 2025, next appointment planned with FZAG for Sep 2026.",
+  },
+  "Hilterfingen|Floor Heating Flush": {
+    de: "Bodenheizung spülen: Alle 6–7 Jahre. Geplant 26.06.2026 durch Frutiger-Zbinden.",
+    en: "Flush floor heating: Every 6–7 years. Planned for 26 Jun 2026 by Frutiger-Zbinden.",
+  },
+  "Hilterfingen|Boiler Descaling": {
+    de: "Warmwasser: Individuell in jeder Wohnung. Letzte Entkalkung 18.03.2018. Geplant 26.06.2028. Loosli gefragt 11.2025.",
+    en: "Hot water: Individual in each apartment. Last descaling on 18 Mar 2018. Planned for 26 Jun 2028. Loosli asked in Nov 2025.",
+  },
+  "Hilterfingen|Garden": {
+    de: "Garten: 2x Herbst und 1x Frühling. 2025-10 erledigt. Gesamter Garten inkl. Bäume entfernen: 12.02.2025.",
+    en: "Garden: Twice in autumn and once in spring. Done in Oct 2025. Entire garden including tree removal: 12 Feb 2025.",
+  },
+  "Hilterfingen|Drain Tile": {
+    de: "Sickerleitung: Alle 5–8 Jahre. Letzte Kontrolle 14.03.2025.",
+    en: "Drain tile: Every 5–8 years. Last inspection on 14 Mar 2025.",
+  },
+  "Hilterfingen|Gravity Lines (Sewer)": {
+    de: "Grundleitungen/Schmutzwasser: 5 Jahre. Letzte Kontrolle 14.03.2025.",
+    en: "Main sewer/wastewater lines: 5 years. Last inspection on 14 Mar 2025.",
+  },
+
+  "Aeschlen|SiNa": {
+    de: "SiNa: Periodische Kontrolle alle 5 Jahre. Letzte Kontrolle 10.08.2025 durch Megaohm.",
+    en: "SiNa: Periodic electrical inspection every 5 years. Last inspection on 10 Aug 2025 by Megaohm.",
+  },
+  "Aeschlen|FUEKO": {
+    de: "FEUKO: Alle 2 Jahre. Markus Joss, eventuell neu Hirschi. Letzte Kontrolle 18.03.2025.",
+    en: "FEUKO: Every 2 years. Markus Joss, possibly Hirschi in future. Last inspection on 18 Mar 2025.",
+  },
+  "Aeschlen|Chimney Sweep": {
+    de: "Kaminfeger: Jährlich durch Hirschi Kaminfeger. Letzte Kontrolle 24.04.2025.",
+    en: "Chimney sweep: Yearly by Hirschi chimney sweep. Last inspection on 24 Apr 2025.",
+  },
+  "Aeschlen|Tank Inspection": {
+    de: "Tankrevision: Letzte Revision 07.05.2022 durch Migrol AG Zürich.",
+    en: "Tank inspection: Last inspection on 7 May 2022 by Migrol AG Zurich.",
+  },
+  "Aeschlen|Heating Service": {
+    de: "Heizung: Öl, 22 kW. Brenner Six Madun 2016, Kessel Six Madun 1997. Jährlich durch Meier-Tobler, letzter Service 10.12.2024.",
+    en: "Heating: Oil, 22 kW. Burner Six Madun 2016, boiler Six Madun 1997. Yearly by Meier-Tobler, last service on 10 Dec 2024.",
+  },
+  "Aeschlen|Garden": {
+    de: "Garten: Macht der Mieter, aber Sträucher und Bäume müssen ca. alle 3 Jahre geschnitten werden.",
+    en: "Garden: Tenant handles it, but shrubs and trees must be cut about every 3 years.",
+  },
+  "Aeschlen|Fire Extinguisher": {
+    de: "Feuerlöscher: Letzte Kontrolle 04.10.2024 durch Primus. Nigg nach Dokumenten gefragt / in Unterhalt gelistet.",
+    en: "Fire extinguisher: Last inspection on 4 Oct 2024 by Primus. Nigg asked for documents / listed in maintenance.",
+  },
+
+  "Traube|SiNa": {
+    de: "SiNa: Periodische Kontrolle 25.06.2008. Letzte PK gemäss Primeo 2010. Nächste Kontrolle 2030. Heizmann fand es nicht im System.",
+    en: "SiNa: Periodic inspection on 25 Jun 2008. Last periodic inspection according to Primeo was 2010. Next inspection 2030. Heizmann did not find it in the system.",
+  },
+  "Traube|FUEKO": {
+    de: "FEUKO: Schlusskontrolle 22.12.2016 durch ESH / Heizman Elektro Controlling.",
+    en: "FEUKO: Final inspection on 22 Dec 2016 by ESH / Heizman Elektro Controlling.",
+  },
+  "Traube|Fire Extinguisher": {
+    de: "Feuerlöscher: Jährlich durch Primus. Letzte Kontrolle 04.10.2024. 2025 noch mit MIKO abklären.",
+    en: "Fire extinguisher: Yearly by Primus. Last inspection on 4 Oct 2024. 2025 still needs follow-up with MIKO.",
+  },
+  "Traube|Chimney Sweep": {
+    de: "Kaminfeger: 11.09.2024 durch Fürst Kaminfeger.",
+    en: "Chimney sweep: 11 Sep 2024 by Fürst chimney sweep.",
+  },
+  "Traube|Tank Inspection": {
+    de: "Tankrevision: Letzte Revision 26.10.2023 durch Suter Joerin.",
+    en: "Tank inspection: Last inspection on 26 Oct 2023 by Suter Joerin.",
+  },
+  "Traube|Heating Service": {
+    de: "Heizung: Öl, 34 kW. Brenner ELCO VE1.34 2020, Kessel Cuenod Unon 2-34, 2003. Jährlich durch ELCO, letzter Service 02.09.2024.",
+    en: "Heating: Oil, 34 kW. Burner ELCO VE1.34 2020, boiler Cuenod Unon 2-34, 2003. Yearly by ELCO, last service on 2 Sep 2024.",
+  },
+  "Traube|Boiler Descaling": {
+    de: "Boiler: Daniel Meier Juni 2025: 2 Boiler. Kleiner Boiler in der Heizung speist den grossen Elektroboiler. Nie entkalkt. A. Borer Alexander beauftragen.",
+    en: "Boiler: Daniel Meier June 2025: 2 boilers. Small boiler in heating system feeds the large electric boiler. Never descaled. Assign A. Borer Alexander.",
+  },
+  "Traube|Drain Tile": {
+    de: "Sickerleitung: Schacht zwischen Haus und Berg. Prüfen, ob dort eine Sickerleitung existiert.",
+    en: "Drain tile: Shaft between house and hill. Check whether a drain tile exists there.",
+  },
+
+  "Kundmatt|SiNa": {
+    de: "SiNa: Letzte PK 25.06.2008. Heizmann Elektro Controlling. Schlusskontrolle 30.09.2015 durch Nowecom. Weitere SK 26.01.2024 durch Hasler + Reinle AG.",
+    en: "SiNa: Last periodic inspection on 25 Jun 2008. Heizmann Elektro Controlling. Final inspection on 30 Sep 2015 by Nowecom. Additional final inspection on 26 Jan 2024 by Hasler + Reinle AG.",
+  },
+  "Kundmatt|Boiler Descaling": {
+    de: "Boiler: Hat Boiler, letztes Mal vor 2022. Muss 2025 gemacht werden.",
+    en: "Boiler: Has boiler, last done before 2022. Must be done in 2025.",
+  },
+  "Kundmatt|Drain Tile": {
+    de: "Sickerleitung: Keine Sickerleitung. Keine Probleme gemäss Email Spiess 02.06.2025.",
+    en: "Drain tile: No drain tile. No problems according to Spiess email on 2 Jun 2025.",
+  },
+  "Kundmatt|Garden": {
+    de: "Garten/Nussbaum: Alle 2 Jahre. 2025-03 zurückgeschnitten und Totholz entfernt. Schnittstellen bis 2 cm überwachsen problemlos, grössere Schnittstellen faulen.",
+    en: "Garden/walnut tree: Every 2 years. Cut back in Mar 2025 and dead wood removed. Cuts up to 2 cm heal well, larger cuts rot.",
+  },
+  "Kundmatt|Heating Service": {
+    de: "Heizung: IR Panel. Info zur Heizung von Frau Spiess am 09.03.2025.",
+    en: "Heating: IR panel. Heating information from Mrs. Spiess on 9 Mar 2025.",
+  },
+
+  "Grenchen|SiNa": {
+    de: "SiNa: 20 Jahre. Letzte Kontrolle 20.07.2025 durch Alpha Control.",
+    en: "SiNa: 20 years. Last inspection on 20 Jul 2025 by Alpha Control.",
+  },
+  "Grenchen|Chimney Sweep": {
+    de: "Kaminfeger: 07.10.2024 durch Felix Weber. Schwedenofen. Kaminfeger fragen.",
+    en: "Chimney sweep: 7 Oct 2024 by Felix Weber. Swedish stove. Ask chimney sweep.",
+  },
+  "Grenchen|Heating Service": {
+    de: "Heizung: Holz / IR Panel.",
+    en: "Heating: Wood / infrared panels.",
+  },
+  "Grenchen|Boiler Descaling OG": {
+    de: "OG Boiler: Selbes Modell wie im UG. Alle 4–5 Jahre, erstes Mal nach 4 Jahren. Installiert 21.11.2024.",
+    en: "Upper-floor boiler: Same model as basement. Every 4–5 years, first time after 4 years. Installed on 21 Nov 2024.",
+  },
+  "Grenchen|Boiler Descaling": {
+    de: "UG Boiler: Alle 5 Jahre. Zuletzt 11.01.2024.",
+    en: "Basement boiler: Every 5 years. Last done on 11 Jan 2024.",
+  },
+  "Grenchen|Drain Tile": {
+    de: "Sickerleitung: Hat keine Sickerleitung. Keine Probleme gemäss Dellsperger vor Ort am 26.05.2025.",
+    en: "Drain tile: No drain tile. No problems according to Dellsperger on-site visit on 26 May 2025.",
+  },
+  "Grenchen|Garden": {
+    de: "Garten: Macht der Mieter. Linde alle 2 Jahre schneiden. Letzter Termin 17.02.2026. Check in 2028 gemäss Email Mosimann 19.02.2026.",
+    en: "Garden: Tenant handles it. Linden tree to be cut every 2 years. Last appointment 17 Feb 2026. Check in 2028 according to Mosimann email on 19 Feb 2026.",
+  },
+  "Grenchen|Water Pump Filter": {
+    de: "Wasserpumpe: Filter periodisch reinigen. Macht der Mieter.",
+    en: "Water pump: Clean filter periodically. Tenant handles it.",
+  },
+
+  "Eich|SiNa": {
+    de: "SiNa: Periodische Kontrolle 23.11.2010, 20 Jahre. Ausbau PV-Anlage: 06.02.2025 durch Sicuro.",
+    en: "SiNa: Periodic inspection on 23 Nov 2010, 20 years. PV system expansion: 6 Feb 2025 by Sicuro.",
+  },
+  "Eich|FUEKO": {
+    de: "FEUKO: Alle 2 Jahre, Lukas Stirnimann. Letzter Eintrag 18.06.2025.",
+    en: "FEUKO: Every 2 years, Lukas Stirnimann. Last entry 18 Jun 2025.",
+  },
+  "Eich|Chimney Sweep": {
+    de: "Kaminfeger: 01.07.2021 durch Lukas Stirnimann. 2025 geplant für 18. Juni.",
+    en: "Chimney sweep: 1 Jul 2021 by Lukas Stirnimann. Planned for 18 June 2025.",
+  },
+  "Eich|Heat Pump Check": {
+    de: "Wärmepumpe: Stiebel-Eltron 2020. Installation durch GT Estermann. Servicevertrag 590 CHF/Jahr. Laut Estermann Techniker Daniel Zumbühl gibt es keine Verschleissteile. Bei Ausfall kann auf Notbetrieb mit Strom umgestellt werden.",
+    en: "Heat pump: Stiebel-Eltron 2020. Installed by GT Estermann. Service contract CHF 590/year. According to Estermann technician Daniel Zumbühl, there are no wear parts. In case of failure, it can be switched to emergency electric operation.",
+  },
+  "Eich|Boiler Descaling": {
+    de: "Boiler: Kombiboiler für Heizung und Warmwasser. Boiler alle 5 Jahre. Am 13.04.2026 gemacht.",
+    en: "Boiler: Combined boiler for heating and hot water. Boiler every 5 years. Done on 13 Apr 2026.",
+  },
+  "Eich|Magnet Separator Cleaning": {
+    de: "Magnetabscheider: Neu 2022. Letzter Eintrag 05.09.2025. Letztes Spülen unklar.",
+    en: "Magnet separator: New in 2022. Last entry 5 Sep 2025. Last flushing unclear.",
+  },
+  "Eich|Garden": {
+    de: "Herbst-Checkliste: Wasser im Garten und Schopf abstellen, Geranien schneiden und in Bastelraum stellen, Fässer leeren, Vorhänge Terrasse in Tankraum, Holz bestellen, Wohnmobil einpacken, Nummern abgeben, WC-Türe offen lassen und Trocknungsgerät installieren.",
+    en: "Autumn checklist: Turn off water in garden and shed, cut geraniums and place in hobby room, empty barrels, store terrace curtains in tank room, order wood, pack camper van, return plates, leave toilet door open and install dehumidifier.",
+  },
+};
 export default function App() {
  
   const [tab, setTab] = useState("home");
@@ -14,7 +226,7 @@ export default function App() {
   "Garden",
   "FUEKO",
   "Roof Inspection",
-  "SiNa",
+  "SiNa Inspection",
   "Tank Inspection",
   "Boiler",
   "Heat Pump Check",
@@ -45,7 +257,7 @@ const maintenanceTypeNamesDe = {
   "Heating Service": "Heizungsservice",
   "Magnet Separator Cleaning": "Magnetabscheider reinigen",
   "Roof Inspection": "Dachkontrolle",
-  "SiNa": "SiNa",
+  "SiNa Inspection": "SiNa-Kontrolle",
   "Tank Inspection": "Tankprüfung",
   "Tank Leak Indicator": "Tank-Leckanzeige",
 };
@@ -231,6 +443,7 @@ const propertyNotes = [
     noteDe: "Kaminfeger kommt jedes Jahr vor dem ersten Einfeuern. Kein Termin nötig; der Kaminfeger kontaktiert den Eigentümer. Der Mieter darf das Ofenrohr reinigen. FEUKO ist bei Holzöfen nicht nötig, nur bei Öl- oder Gasbrennern.",
   },
 ];
+
   useEffect(() => localStorage.setItem("properties", JSON.stringify(properties)), [properties]);
   useEffect(() => localStorage.setItem("maintenanceAlerts", JSON.stringify(maintenance)), [maintenance]);
   useEffect(() => {
@@ -261,6 +474,23 @@ useEffect(() => {
   });
 }, [maintenance, hasLoadedBackend]);
   useEffect(() => localStorage.setItem("documents", JSON.stringify(documents)), [documents]);
+  useEffect(() => {
+  if (!hasLoadedBackend) return;
+
+  setMaintenance((current) =>
+    current.map((item) => {
+      const extra = maintenanceExtraNotes[`${item.property}|${item.type}`];
+
+      if (!extra) return item;
+
+      return {
+        ...item,
+        notesEn: item.notesEn || extra.en,
+        notesDe: item.notesDe || extra.de,
+      };
+    })
+  );
+}, [hasLoadedBackend]);
   useEffect(() => localStorage.setItem("contacts", JSON.stringify(contacts)), [contacts]);
  useEffect(() => {
   if (!navigator.onLine) {
