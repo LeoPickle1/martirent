@@ -10,6 +10,8 @@ body {
 
 .appShell {
   min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -17,12 +19,12 @@ body {
 
 .phone {
   width: 390px;
-  height: 844px;
+  height: 100vh;
   background: #f8f8f8;
   border-radius: 34px;
   overflow: hidden;
   border: 4px solid #ffffff;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
 }
@@ -48,8 +50,10 @@ body {
 
 .content {
   flex: 1;
+  height: calc(100vh - 120px);
   overflow-y: auto;
   padding: 16px;
+  padding-bottom: 120px;
 }
 
 h2 {
@@ -69,7 +73,7 @@ h3 {
   font-size: 14px;
   margin-bottom: 12px;
   background: white;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
 }
 
 .card {
@@ -78,7 +82,7 @@ h3 {
   padding: 14px;
   margin: 12px 0;
   border: 1px solid #eee;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 }
 
 .heroCard {
@@ -87,7 +91,7 @@ h3 {
   border-radius: 22px;
   padding: 18px;
   margin: 12px 0;
-  box-shadow: 0 10px 24px rgba(179,0,0,0.25);
+  box-shadow: 0 10px 24px rgba(179, 0, 0, 0.25);
 }
 
 .heroCard h3 {
@@ -130,12 +134,16 @@ h3 {
   margin-top: 12px;
 }
 
+.statsGridTwo {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .statCard {
   background: white;
   border-radius: 18px;
   padding: 14px 8px;
   text-align: center;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 }
 
 .statCard strong {
@@ -148,6 +156,11 @@ h3 {
   margin: 3px 0 0;
   color: #666;
   font-size: 12px;
+}
+
+.overdueSmall {
+  color: #b30000;
+  font-size: 18px;
 }
 
 .dangerText strong {
@@ -189,7 +202,7 @@ button {
 
 .quickGrid button {
   background: white;
-  box-shadow: 0 5px 14px rgba(0,0,0,0.07);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.07);
   padding: 14px 8px;
 }
 
@@ -293,29 +306,6 @@ body,
   overflow: hidden;
 }
 
-.appShell {
-  height: 100vh;
-  overflow: hidden;
-}
-
-.phone {
-  height: 100vh;
-  overflow: hidden;
-}
-
-.content {
-  height: calc(100vh - 120px);
-  overflow-y: auto;
-  padding-bottom: 120px;
-}
-.statsGridTwo {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.overdueSmall {
-  color: #b30000;
-  font-size: 18px;
-}
 .flashCard {
   animation: flashCard 1.8s ease;
 }
@@ -327,10 +317,11 @@ body,
   }
 
   100% {
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
     transform: scale(1);
   }
 }
+
 .attentionBtn {
   width: 100%;
   background: transparent;
@@ -346,6 +337,7 @@ body,
 .attentionBtn:hover {
   background: #f5f5f5;
 }
+
 .historyBox {
   background: #f7f7f7;
   border-radius: 12px;
@@ -361,19 +353,20 @@ body,
   font-size: 14px;
   color: #333;
 }
+
 .formCard {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  
+
   width: 340px;
   max-height: 75vh;
   overflow-y: auto;
 
   z-index: 999;
   border-left: 6px solid #b30000;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
 }
 
 .formCard label {
@@ -398,6 +391,14 @@ body,
   gap: 8px;
   margin-top: 10px;
 }
+
+.formOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 998;
+}
+
 .offlineNotice {
   position: sticky;
   top: 0;
@@ -409,19 +410,14 @@ body,
   text-align: center;
   font-weight: 700;
   margin-bottom: 10px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 
 .darkMode .offlineNotice {
   background: #b30000;
   color: white;
 }
-.formOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.25);
-  z-index: 998;
-}
+
 input[type="number"] {
   appearance: textfield;
   -moz-appearance: textfield;
@@ -431,4 +427,17 @@ input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+.logoTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appLogo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: white;
 }

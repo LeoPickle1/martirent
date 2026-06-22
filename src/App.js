@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import emailjs from "@emailjs/browser";
 import "./App.css";
-
+import logo from "./images/logo.png";
 export default function App() {
+ 
   const [tab, setTab] = useState("home");
   const maintenanceTypes = [
   "Ash Inspection",
@@ -1159,6 +1160,7 @@ const propertyNotesForSelected = selectedProperty
 const openMaintenanceTab = () => {
   openTab("maintenance");
 };
+
  const renderItem = (m, i) => {
   const originalIndex = maintenance.findIndex(
     (item) =>
@@ -1182,6 +1184,7 @@ const historyDates = Array.from(
       <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
 <p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
       <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
+      
       {(language === "en" ? m.notesEn : m.notesDe || m.notes) && (
   <div className="historyBox">
     <p><b>{language === "en" ? "Notes" : "Notizen"}:</b></p>
@@ -1231,7 +1234,10 @@ const historyDates = Array.from(
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
   <div>
     <p className="eyebrow">{t.appSubtitle}</p>
-    <h1>MartiRent</h1>
+    <div className="logoTitle">
+  <img src={logo} alt="MartiRent logo" className="appLogo" />
+  <h1>MartiRent</h1>
+</div>
   </div>
 
   <div
