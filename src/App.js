@@ -1235,7 +1235,6 @@ const historyDates = Array.from(
   <div>
     <p className="eyebrow">{t.appSubtitle}</p>
     <div className="logoTitle">
- <img src="/logo.png" alt="MartiRent logo" className="appLogo" />
   <h1>MartiRent</h1>
 </div>
   </div>
