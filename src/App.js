@@ -3,12 +3,12 @@ import emailjs from "@emailjs/browser";
 import "./App.css";
 import { importedContacts } from "./contactsData";
 const maintenanceExtraNotes = {
-  "Sempach|SiNa": {
+  "Sempach|SiNa Inspection": {
     de: "SiNa: Periodische Kontrolle am 10.10.2024 durch Elektro-Team Eich. SiNa Bericht pendent.",
     en: "SiNa: Periodic electrical inspection on 10 Oct 2024 by Elektro-Team Eich. SiNa report pending.",
   },
 
-  "Langnau|SiNa": {
+  "Langnau|SiNa Inspection": {
     de: "SiNa: Periodische Kontrolle alle 5 Jahre. Letzte Kontrolle 26.07.2025 durch MegaOhm.",
     en: "SiNa: Periodic electrical inspection every 5 years. Last inspection on 26 Jul 2025 by MegaOhm.",
   },
@@ -37,7 +37,7 @@ const maintenanceExtraNotes = {
     en: "Heating: Oil, 17 kW. Burner Oertli 2015, boiler Six Madun 1994. Yearly service by Meier-Tobler, last service on 17 Feb 2026.",
   },
 
-  "Hilterfingen|SiNa": {
+  "Hilterfingen|SiNa Inspection": {
     de: "SiNa: Periodische Kontrolle 16.11.2009 durch EM Electrocontrol AG. Schlusskontrolle 14.05.2019 durch EM Electrocontrol AG. Zahlenkombination: PLZ Hilterfingen 3652.",
     en: "SiNa: Periodic inspection on 16 Nov 2009 by EM Electrocontrol AG. Final inspection on 14 May 2019 by EM Electrocontrol AG. Code: Hilterfingen ZIP code 3652.",
   },
@@ -70,7 +70,7 @@ const maintenanceExtraNotes = {
     en: "Main sewer/wastewater lines: 5 years. Last inspection on 14 Mar 2025.",
   },
 
-  "Aeschlen|SiNa": {
+  "Aeschlen|SiNa Inspection": {
     de: "SiNa: Periodische Kontrolle alle 5 Jahre. Letzte Kontrolle 10.08.2025 durch Megaohm.",
     en: "SiNa: Periodic electrical inspection every 5 years. Last inspection on 10 Aug 2025 by Megaohm.",
   },
@@ -99,7 +99,7 @@ const maintenanceExtraNotes = {
     en: "Fire extinguisher: Last inspection on 4 Oct 2024 by Primus. Nigg asked for documents / listed in maintenance.",
   },
 
-  "Traube|SiNa": {
+  "Traube|SiNa Inspection": {
     de: "SiNa: Periodische Kontrolle 25.06.2008. Letzte PK gemäss Primeo 2010. Nächste Kontrolle 2030. Heizmann fand es nicht im System.",
     en: "SiNa: Periodic inspection on 25 Jun 2008. Last periodic inspection according to Primeo was 2010. Next inspection 2030. Heizmann did not find it in the system.",
   },
@@ -132,7 +132,7 @@ const maintenanceExtraNotes = {
     en: "Drain tile: Shaft between house and hill. Check whether a drain tile exists there.",
   },
 
-  "Kundmatt|SiNa": {
+  "Kundmatt|SiNa Inspection": {
     de: "SiNa: Letzte PK 25.06.2008. Heizmann Elektro Controlling. Schlusskontrolle 30.09.2015 durch Nowecom. Weitere SK 26.01.2024 durch Hasler + Reinle AG.",
     en: "SiNa: Last periodic inspection on 25 Jun 2008. Heizmann Elektro Controlling. Final inspection on 30 Sep 2015 by Nowecom. Additional final inspection on 26 Jan 2024 by Hasler + Reinle AG.",
   },
@@ -153,7 +153,7 @@ const maintenanceExtraNotes = {
     en: "Heating: IR panel. Heating information from Mrs. Spiess on 9 Mar 2025.",
   },
 
-  "Grenchen|SiNa": {
+  "Grenchen|SiNa Inspection": {
     de: "SiNa: 20 Jahre. Letzte Kontrolle 20.07.2025 durch Alpha Control.",
     en: "SiNa: 20 years. Last inspection on 20 Jul 2025 by Alpha Control.",
   },
@@ -186,7 +186,7 @@ const maintenanceExtraNotes = {
     en: "Water pump: Clean filter periodically. Tenant handles it.",
   },
 
-  "Eich|SiNa": {
+  "Eich|SiNa Inspection": {
     de: "SiNa: Periodische Kontrolle 23.11.2010, 20 Jahre. Ausbau PV-Anlage: 06.02.2025 durch Sicuro.",
     en: "SiNa: Periodic inspection on 23 Nov 2010, 20 years. PV system expansion: 6 Feb 2025 by Sicuro.",
   },
@@ -281,6 +281,7 @@ const [maintenanceForm, setMaintenanceForm] = useState({
   lastDone: "",
   intervalYears: "",
   warningDays: "",
+  sendEmail: false,
   notesEn: "",
   notesDe: "",
   historyText: "",
@@ -793,7 +794,26 @@ const formatDateDisplay = (dateString) => {
           : "future",
     };
   });
+  const findCompanyEmail = (companyName) => {
+  if (!companyName) return "";
+
+  const companyNameLower = companyName.toLowerCase();
+
+  const match = contacts.find((contact) => {
+    const contactCompany = (contact.company || "").toLowerCase();
+
+    return (
+      contactCompany.includes(companyNameLower) ||
+      companyNameLower.includes(contactCompany)
+    );
+  });
+
+  if (!match || !match.email) return "";
+
+  return match.email.split(" / ")[0];
+};
 const sendReminderEmail = async (
+  toEmail,
   property,
   maintenance,
   company,
@@ -805,7 +825,7 @@ const sendReminderEmail = async (
       "service_se557qo",
       "template_ewxeb9s",
       {
-        to_email: "martirent2026@gmail.com",
+        to_email: toEmail,
         property,
         maintenance,
         company,
@@ -825,7 +845,11 @@ useEffect(() => {
   const reminderDays = [365, 30, 7];
 
   items.forEach((item) => {
-    if (!reminderDays.includes(item.days)) return;
+  if (!item.sendEmail) return;
+  if (!reminderDays.includes(item.days)) return;
+
+  const companyEmail = findCompanyEmail(item.company);
+  if (!companyEmail) return;
 
     const emailId = `${item.property}-${item.type}-${item.nextDue}-${item.days}`;
 
@@ -836,12 +860,13 @@ useEffect(() => {
     if (sentEmails.includes(emailId)) return;
 
     sendReminderEmail(
-      item.property,
-      item.type,
-      item.company,
-      item.nextDue,
-      item.days
-    );
+  companyEmail,
+  item.property,
+  item.type,
+  item.company,
+  item.nextDue,
+  item.days
+);
 
     localStorage.setItem(
       "sentReminderEmails",
@@ -898,6 +923,7 @@ useEffect(() => {
   .sort((a, b) => a.days - b.days)
   .slice(0, 5);
 
+  const allAttentionItems = [...overdue, ...dueSoon].sort((a, b) => a.days - b.days);
   const today = new Date();
   const calendarDate = new Date(today.getFullYear(), today.getMonth() + calendarOffset, 1);
   const year = calendarDate.getFullYear();
@@ -1056,6 +1082,7 @@ const addMaintenance = () => {
     notesEn: "",
     notesDe: "",
     historyText: "",
+    sendEmail: false,
   });
 
   setMaintenanceFormOpen(true);
@@ -1075,6 +1102,7 @@ setMaintenanceForm({
   lastDone: current.lastDone || "",
   intervalYears: current.intervalYears || "",
   warningDays: current.warningDays || "",
+  sendEmail: current.sendEmail || false,
   notesEn: current.notesEn || "",
   notesDe: current.notesDe || current.notes || "",
   historyText: historyDates.join("\n"),
@@ -1105,6 +1133,7 @@ const savedMaintenance = {
   lastDone: maintenanceForm.lastDone,
   intervalYears: maintenanceForm.intervalYears,
   warningDays: maintenanceForm.warningDays,
+  sendEmail: maintenanceForm.sendEmail,
   notesEn: maintenanceForm.notesEn,
   notesDe: maintenanceForm.notesDe,
   history,
@@ -1132,6 +1161,7 @@ if (editingMaintenanceIndex === null) {
   lastDone: "",
   intervalYears: "",
   warningDays: "",
+  sendEmail: false,
   notesEn: "",
 notesDe: "",
   historyText: "",
@@ -1148,6 +1178,7 @@ const cancelMaintenanceForm = () => {
   lastDone: "",
   intervalYears: "",
   warningDays: "",
+  sendEmail: false,
   notesEn: "",
 notesDe: "",
   historyText: "",
@@ -1637,37 +1668,14 @@ setTab("properties");
   </div>
 </div>
 
-              <h3>{t.needsAttention}</h3>
+             
 
-              <div className="card">
-                {attentionItems.length === 0 ? (
-                  <p className="muted">{t.everythingGood}</p>
-                ) : (
-                  attentionItems.map((m, i) => {
-  const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
-    .replace(/\s+/g, "-")
-    .replace(/[^a-zA-Z0-9-_]/g, "");
-
-  return (
-    <button
-      key={i}
-      className="attentionBtn"
-      onClick={() => {
-        setSearch("");
-        setHighlightMaintenance(maintenanceId);
-        setTab("maintenance");
-      }}
-    >
-      {m.status === "overdue" ? "🚨" : "⚠️"} {m.property}: {getMaintenanceTypeName(m.type)}
-    </button>
-  );
-})
-                )}
-              </div>
+              
 
               <h3>{t.quickActions}</h3>
 
               <div className="quickGrid">
+  <button onClick={() => openTab("attention")}>🚨 {t.needsAttention}</button>
   <button onClick={() => openTab("properties")}>🏢 {t.properties}</button>
   <button onClick={openMaintenanceTab}>🔧 {t.maintenance}</button>
   <button onClick={() => openTab("calendar")}>📅 {t.calendar}</button>
@@ -1851,7 +1859,27 @@ setTab("properties");
 )}
                 </>
               ))}
+{tab === "attention" && (
+  <>
+    <div className="sectionTop">
+      <h2>{t.needsAttention}</h2>
+    </div>
 
+    <div className="card">
+      <h3>{language === "en" ? "Overdue" : "Überfällig"}</h3>
+
+      {overdue.length === 0 ? (
+        <p className="muted">
+          {language === "en"
+            ? "No overdue maintenance."
+            : "Kein überfälliger Unterhalt."}
+        </p>
+      ) : (
+        overdue.map((m, i) => renderItem(m, i))
+      )}
+    </div>
+  </>
+)}
           {tab === "maintenance" && (
             <>
               <div className="sectionTop">
@@ -1968,6 +1996,22 @@ setTab("properties");
   }
   placeholder="30"
 />
+<label style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "10px" }}>
+  <input
+    type="checkbox"
+    checked={maintenanceForm.sendEmail}
+    onChange={(e) =>
+      setMaintenanceForm({
+        ...maintenanceForm,
+        sendEmail: e.target.checked,
+      })
+    }
+  />
+  
+  {language === "en"
+    ? "Send reminder email to company"
+    : "Erinnerungs-E-Mail an Firma senden"}
+</label>
 <label>Notes English</label>
 <textarea
   className="formInput"
