@@ -272,6 +272,7 @@ const getMaintenanceTypeName = (type) => {
 };
   const [offlineNotice, setOfflineNotice] = useState(false);
   const [search, setSearch] = useState("");
+  const [maintenanceFilter, setMaintenanceFilter] = useState("all");
   const [maintenanceFormOpen, setMaintenanceFormOpen] = useState(false);
 const [editingMaintenanceIndex, setEditingMaintenanceIndex] = useState(null);
 const [maintenanceForm, setMaintenanceForm] = useState({
@@ -938,6 +939,13 @@ useEffect(() => {
   .slice(0, 5);
 
   const allAttentionItems = [...overdue, ...dueSoon].sort((a, b) => a.days - b.days);
+  const maintenancePageItems = filteredItems.filter((m) => {
+  if (maintenanceFilter === "all") return true;
+  if (maintenanceFilter === "overdue") return m.status === "overdue";
+  if (maintenanceFilter === "dueSoon") return m.status === "warning";
+  if (maintenanceFilter === "future") return m.status === "future";
+  return true;
+});
   const today = new Date();
   const calendarDate = new Date(today.getFullYear(), today.getMonth() + calendarOffset, 1);
   const year = calendarDate.getFullYear();
@@ -1616,12 +1624,20 @@ setTab("properties");
       {filteredItems.length ? (
         filteredItems.map((m, i) => (
           <p
-            key={i}
-           onClick={openMaintenanceTab}
-            style={{ cursor: "pointer" }}
-          >
-            🔧 {m.property}: {getMaintenanceTypeName(m.type)} — {m.company}
-          </p>
+  key={i}
+  onClick={() => {
+    const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
+      .replace(/\s+/g, "-")
+      .replace(/[^a-zA-Z0-9-_]/g, "");
+
+    setHighlightMaintenance(maintenanceId);
+    setSearch("");
+    setTab("maintenance");
+  }}
+  style={{ cursor: "pointer" }}
+>
+  🔧 {m.property}: {getMaintenanceTypeName(m.type)} — {m.company}
+</p>
         ))
       ) : (
         <p className="muted">{t.noMaintenanceFound}</p>
@@ -1634,7 +1650,10 @@ setTab("properties");
         filteredContacts.map((c, i) => (
           <p
             key={i}
-            onClick={() => openTab("contacts")}
+         onClick={() => {
+  setSearch("");
+  openTab("contacts");
+}}
             style={{ cursor: "pointer" }}
           >
             📞 {c.company}
@@ -1651,7 +1670,10 @@ setTab("properties");
         filteredDocuments.map((d, i) => (
           <p
             key={i}
-            onClick={() => openTab("documents")}
+onClick={() => {
+  setSearch("");
+  openTab("documents");
+}}
             style={{ cursor: "pointer" }}
           >
             📄 {d.name} — {d.type}
@@ -1707,7 +1729,6 @@ setTab("properties");
               <h3>{t.quickActions}</h3>
 
               <div className="quickGrid">
-  <button onClick={() => openTab("attention")}>🚨 {t.needsAttention}</button>
   <button onClick={() => openTab("properties")}>🏢 {t.properties}</button>
   <button onClick={openMaintenanceTab}>🔧 {t.maintenance}</button>
   <button onClick={() => openTab("calendar")}>📅 {t.calendar}</button>
@@ -1918,6 +1939,35 @@ setTab("properties");
                 <h2>{t.maintenance}</h2>
                 <button className="primaryBtn" onClick={addMaintenance}>+ {t.add}</button>
               </div>
+              <div className="filterRow">
+  <button
+    className={maintenanceFilter === "all" ? "activeFilter" : ""}
+    onClick={() => setMaintenanceFilter("all")}
+  >
+    All
+  </button>
+
+  <button
+    className={maintenanceFilter === "overdue" ? "activeFilter" : ""}
+    onClick={() => setMaintenanceFilter("overdue")}
+  >
+    Overdue
+  </button>
+
+  <button
+    className={maintenanceFilter === "dueSoon" ? "activeFilter" : ""}
+    onClick={() => setMaintenanceFilter("dueSoon")}
+  >
+    Due Soon
+  </button>
+
+  <button
+    className={maintenanceFilter === "future" ? "activeFilter" : ""}
+    onClick={() => setMaintenanceFilter("future")}
+  >
+    Future
+  </button>
+</div>
 {maintenanceFormOpen && (
   <>
     <div className="formOverlay" onClick={cancelMaintenanceForm}></div>
@@ -2100,7 +2150,7 @@ setTab("properties");
     </div>
   </>
 )}
-              {filteredItems.map(renderItem)}
+             {maintenancePageItems.map(renderItem)}
             </>
           )}
 
