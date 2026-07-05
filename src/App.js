@@ -499,6 +499,29 @@ useEffect(() => {
   );
 }, [hasLoadedBackend]);
   useEffect(() => localStorage.setItem("contacts", JSON.stringify(contacts)), [contacts]);
+  useEffect(() => {
+  fetch("https://martirent-backend-production.up.railway.app/contacts")
+    .then((res) => res.json())
+    .then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        setContacts(data);
+      }
+    })
+    .catch((error) => {
+      console.error("Contacts backend load failed:", error);
+    });
+}, []);
+useEffect(() => {
+  fetch("https://martirent-backend-production.up.railway.app/contacts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(contacts),
+  }).catch((error) => {
+    console.error("Contacts backend sync failed:", error);
+  });
+}, [contacts]);
  useEffect(() => {
   if (!navigator.onLine) {
     setOfflineNotice(true);
