@@ -1435,7 +1435,7 @@ const openMaintenanceTab = () => {
       item.company === m.company &&
       item.lastDone === m.lastDone
   );
-
+const safeIndex = originalIndex === -1 ? i : originalIndex;
   const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
     .replace(/\s+/g, "-")
     .replace(/[^a-zA-Z0-9-_]/g, "");
@@ -1473,17 +1473,12 @@ const historyDates = Array.from(
       ))}
   </div>
 )}
-      <button className="primaryBtn" onClick={() => completeMaintenance(originalIndex)}>
-        ✓ {t.complete}
+<button className="primaryBtn" onClick={() => completeMaintenance(safeIndex)}>        ✓ {t.complete}
       </button>
 
-      <button onClick={() => editMaintenance(originalIndex)}>
-        {t.edit}
-      </button>
+    
 
-      <button className="dangerBtn" onClick={() => deleteMaintenance(originalIndex)}>
-        {t.delete}
-      </button>
+      
     </div>
   );
 };
@@ -2085,9 +2080,9 @@ setTab("properties");
               </div>
 
               <div className="calendarGridBig">
-                {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
-                  <div key={d} className="dayNameBig">{d}</div>
-                ))}
+                {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+  <div key={i} className="dayNameBig">{d}</div>
+))}
 
                 {calendar.map((day, i) => {
                   const date = formatDate(day);
