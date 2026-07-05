@@ -794,6 +794,20 @@ const formatDateDisplay = (dateString) => {
           : "future",
     };
   });
+  const findCompanyContact = (companyName) => {
+  if (!companyName) return null;
+
+  const companyNameLower = companyName.toLowerCase();
+
+  return contacts.find((contact) => {
+    const contactCompany = (contact.company || "").toLowerCase();
+
+    return (
+      contactCompany.includes(companyNameLower) ||
+      companyNameLower.includes(contactCompany)
+    );
+  });
+};
   const findCompanyEmail = (companyName) => {
   if (!companyName) return "";
 
@@ -1442,11 +1456,27 @@ const safeIndex = originalIndex === -1 ? i : originalIndex;
 const historyDates = Array.from(
   new Set([...(m.history || []), m.lastDone].filter(Boolean))
 ).reverse();
+const companyContact = findCompanyContact(m.company);
   return (
     <div className={`card ${m.status}`} id={maintenanceId} key={i}>
       <h3>{getMaintenanceTypeName(m.type)}</h3>
       <p><b>{t.properties}:</b> {m.property}</p>
       <p><b>{t.company}:</b> {m.company}</p>
+      {companyContact && (
+  <div className="contactMiniBox">
+    {companyContact.phone && (
+      <p><b>{t.phone}:</b> {companyContact.phone}</p>
+    )}
+
+    {companyContact.email && (
+      <p><b>{t.email}:</b> {companyContact.email}</p>
+    )}
+
+    {companyContact.website && (
+      <p><b>{t.website}:</b> {companyContact.website}</p>
+    )}
+  </div>
+)}
       <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
 <p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
       <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
@@ -1475,10 +1505,17 @@ const historyDates = Array.from(
 )}
 <button className="primaryBtn" onClick={() => completeMaintenance(safeIndex)}>        ✓ {t.complete}
       </button>
+      {tab === "maintenance" && (
+  <>
+    <button onClick={() => editMaintenance(safeIndex)}>
+      {t.edit}
+    </button>
 
-    
-
-      
+    <button className="dangerBtn" onClick={() => deleteMaintenance(safeIndex)}>
+      {t.delete}
+    </button>
+  </>
+)}
     </div>
   );
 };
@@ -2201,22 +2238,26 @@ setTab("properties");
    </div>
   </>
 )}
-    {filteredContacts.map((c, i) => (
-      <div className="card" key={i}>
-        <h3>{c.company}</h3>
-        <p><b>{t.phone}:</b> {c.phone || "-"}</p>
-        <p><b>{t.email}:</b> {c.email || "-"}</p>
-        <p><b>{t.website}:</b> {c.website || "-"}</p>
+   {filteredContacts.map((c, i) => {
+  const originalIndex = contacts.indexOf(c);
 
-        <button onClick={() => editContact(i)}>
-          {t.edit}
-        </button>
+  return (
+    <div className="card" key={i}>
+      <h3>{c.company}</h3>
+      <p><b>{t.phone}:</b> {c.phone || "-"}</p>
+      <p><b>{t.email}:</b> {c.email || "-"}</p>
+      <p><b>{t.website}:</b> {c.website || "-"}</p>
 
-        <button className="dangerBtn" onClick={() => deleteContact(i)}>
-          {t.delete}
-        </button>
-      </div>
-    ))}
+      <button onClick={() => editContact(originalIndex)}>
+        {t.edit}
+      </button>
+
+      <button className="dangerBtn" onClick={() => deleteContact(originalIndex)}>
+        {t.delete}
+      </button>
+    </div>
+  );
+})}
   </>
 )}
 
@@ -2276,9 +2317,7 @@ setTab("properties");
   </>
 )}
               {filteredDocuments.map((d, i) => {
-  const originalIndex = documents.findIndex(
-    (doc) => doc.name === d.name && doc.type === d.type
-  );
+  const originalIndex = documents.indexOf(d);
 
   return (
     <div className="card" key={i}>
