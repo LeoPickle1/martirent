@@ -2074,7 +2074,12 @@ setTab("properties");
               <div className="monthHeader">
                 <button onClick={() => setCalendarOffset(calendarOffset - 12)}>«</button>
                 <button onClick={() => setCalendarOffset(calendarOffset - 1)}>‹</button>
-                <strong>{calendarDate.toLocaleString("default", { month: "long" })} {year}</strong>
+             <strong>
+  {calendarDate.toLocaleString(language === "de" ? "de-CH" : "en-GB", {
+    month: "long",
+  })}{" "}
+  {year}
+</strong>
                 <button onClick={() => setCalendarOffset(calendarOffset + 1)}>›</button>
                 <button onClick={() => setCalendarOffset(calendarOffset + 12)}>»</button>
               </div>
