@@ -314,6 +314,7 @@ const [documentForm, setDocumentForm] = useState({
   const [showHeader, setShowHeader] = useState(true);
   const [language, setLanguage] = useState("en");
 const [hasLoadedBackend, setHasLoadedBackend] = useState(false);
+const [hasLoadedPropertiesBackend, setHasLoadedPropertiesBackend] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
     return localStorage.getItem("notificationsEnabled") === "true";
   });
@@ -508,9 +509,12 @@ useEffect(() => {
           setProperties(data);
           localStorage.setItem("properties", JSON.stringify(data));
         }
+
+        setHasLoadedPropertiesBackend(true);
       })
       .catch((error) => {
         console.error("Properties backend load failed:", error);
+        setHasLoadedPropertiesBackend(true);
       });
   };
 
@@ -560,7 +564,7 @@ useEffect(() => {
 }, [contacts, hasLoadedBackend]);
 
 useEffect(() => {
-  if (!hasLoadedBackend) return;
+  if (!hasLoadedPropertiesBackend) return;
 
   if (!Array.isArray(properties) || properties.length === 0) {
     console.log("Skipped properties sync because properties is empty");
@@ -576,7 +580,7 @@ useEffect(() => {
   }).catch((error) => {
     console.error("Properties backend sync failed:", error);
   });
-}, [properties, hasLoadedBackend]);
+}, [properties, hasLoadedPropertiesBackend]);
   useEffect(() => localStorage.setItem("documents", JSON.stringify(documents)), [documents]);
   useEffect(() => {
   if (!hasLoadedBackend) return;
@@ -596,29 +600,8 @@ useEffect(() => {
   );
 }, [hasLoadedBackend]);
   useEffect(() => localStorage.setItem("contacts", JSON.stringify(contacts)), [contacts]);
-  useEffect(() => {
-  fetch("https://martirent-backend-production.up.railway.app/contacts")
-    .then((res) => res.json())
-    .then((data) => {
-      if (Array.isArray(data) && data.length > 0) {
-        setContacts(data);
-      }
-    })
-    .catch((error) => {
-      console.error("Contacts backend load failed:", error);
-    });
-}, []);
-useEffect(() => {
-  fetch("https://martirent-backend-production.up.railway.app/contacts", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(contacts),
-  }).catch((error) => {
-    console.error("Contacts backend sync failed:", error);
-  });
-}, [contacts]);
+  
+
  useEffect(() => {
   if (!navigator.onLine) {
     setOfflineNotice(true);
