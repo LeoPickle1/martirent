@@ -460,6 +460,12 @@ const propertyNotes = [
 useEffect(() => {
   if (!hasLoadedBackend) return;
 
+  // Do not let an empty phone/app wipe the database
+  if (!Array.isArray(maintenance) || maintenance.length === 0) {
+    console.log("Skipped backend sync because maintenance is empty");
+    return;
+  }
+
   fetch("https://martirent-backend-production.up.railway.app/maintenance", {
     method: "POST",
     headers: {
