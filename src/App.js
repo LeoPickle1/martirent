@@ -717,7 +717,7 @@ dashboard: "Home Page",
     spreadsheet: "Spreadsheet",
     updateSpreadsheet: "Update Spreadsheet",
     showSpreadsheet: "Show Spreadsheet",
-    hideSpreadsheet: "Hide Spreadsheet",
+    close: "Close",
     switchLanguage: "Deutsch",
     calendar: "Calendar",
 contacts: "Contacts",
@@ -785,7 +785,7 @@ dashboard: "Startseite",
     spreadsheet: "Tabelle",
     updateSpreadsheet: "Tabelle aktualisieren",
     showSpreadsheet: "Tabelle anzeigen",
-    hideSpreadsheet: "Tabelle ausblenden",
+    close: "Schliessen",
     switchLanguage: "English",
     calendar: "Kalender",
 contacts: "Kontakte",
@@ -1798,35 +1798,9 @@ const companyContact = findCompanyContact(m.company);
 
 <div className="quickGrid">
   <button onClick={updateSpreadsheet}>{t.updateSpreadsheet}</button>
-  <button onClick={() => setShowSpreadsheetPreview((value) => !value)}>
-    {showSpreadsheetPreview ? t.hideSpreadsheet : t.showSpreadsheet}
-  </button>
+  <button onClick={() => setShowSpreadsheetPreview(true)}>{t.showSpreadsheet}</button>
 </div>
 
-{showSpreadsheetPreview && (
-  <div className="card spreadsheetPreview">
-    <table>
-      <thead>
-        <tr>
-          <th>{language === "de" ? "Liegenschaft" : "Property"}</th>
-          <th>{language === "de" ? "Wartung" : "Maintenance"}</th>
-          <th>{t.company}</th>
-          <th>{t.nextDue}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {getSpreadsheetMaintenanceRows().map((row, i) => (
-          <tr key={i}>
-            <td>{row.Liegenschaft}</td>
-            <td>{row.Wartung}</td>
-            <td>{row.Firma}</td>
-            <td>{formatDateDisplay(row.nextDueValue)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-)}
 
  <h3>{t.backup}</h3>
 
@@ -2424,6 +2398,46 @@ const companyContact = findCompanyContact(m.company);
           )}
         </div>
 
+{showSpreadsheetPreview && (
+  <>
+    <div className="spreadsheetOverlay" onClick={() => setShowSpreadsheetPreview(false)}></div>
+    <div className="spreadsheetModal" role="dialog" aria-modal="true" aria-label={t.spreadsheet}>
+      <div className="spreadsheetModalHeader">
+        <h3>{t.spreadsheet}</h3>
+        <button
+          className="closeBtn"
+          onClick={() => setShowSpreadsheetPreview(false)}
+          aria-label={t.close}
+        >
+          X
+        </button>
+      </div>
+
+      <div className="spreadsheetPreview">
+        <table>
+          <thead>
+            <tr>
+              <th>{language === "de" ? "Liegenschaft" : "Property"}</th>
+              <th>{language === "de" ? "Wartung" : "Maintenance"}</th>
+              <th>{t.company}</th>
+              <th>{t.nextDue}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {getSpreadsheetMaintenanceRows().map((row, i) => (
+              <tr key={i}>
+                <td>{row.Liegenschaft}</td>
+                <td>{row.Wartung}</td>
+                <td>{row.Firma}</td>
+                <td>{formatDateDisplay(row.nextDueValue)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </>
+)}
 <div className="nav">  <button className={tab === "home" ? "active" : ""} onClick={() => openTab("home")}>
     🏠<span>{t.home}</span>
   </button>
