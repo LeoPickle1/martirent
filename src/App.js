@@ -1357,7 +1357,7 @@ const cancelContactForm = () => {
   };
 
   const getSpreadsheetMaintenanceRows = () =>
-    items.map((item, index) => ({
+    items.slice().sort(compareMaintenanceByPropertyOrder).map((item, index) => ({
       "Nr.": index + 1,
       Liegenschaft: item.property,
       Wartung: language === "de" ? getMaintenanceTypeName(item.type) : item.type,
@@ -1365,10 +1365,10 @@ const cancelContactForm = () => {
       Firma: item.company || "",
       "Zuletzt erledigt": item.lastDone || "",
       "Nächste Fälligkeit": item.nextDue || "",
+      nextDueValue: item.nextDue || "",
       "Intervall (Jahre)": Number(item.intervalYears || 0) || "",
       Bemerkungen: getMaintenanceNotes(item),
     }));
-
   const getSpreadsheetSummaryRows = () => {
     const rows = [
       ["Kennzahl", "Wert", "", "Liegenschaft", "Anzahl Wartungen"],
@@ -1822,7 +1822,7 @@ const companyContact = findCompanyContact(m.company);
             <td>{row.Liegenschaft}</td>
             <td>{row.Wartung}</td>
             <td>{row.Firma}</td>
-            <td>{formatDateDisplay(row["Nächste Fälligkeit"])}</td>
+            <td>{formatDateDisplay(row.nextDueValue)}</td>
           </tr>
         ))}
       </tbody>
