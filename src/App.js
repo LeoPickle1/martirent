@@ -472,6 +472,22 @@ useEffect(() => {
     });
 }, []);
 
+
+useEffect(() => {
+  fetch("https://martirent-backend-production.up.railway.app/contacts")
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("Loaded contacts from backend:", data);
+
+      if (Array.isArray(data) && data.length > 0) {
+        setContacts(data);
+        localStorage.setItem("savedContacts", JSON.stringify(data));
+      }
+    })
+    .catch((error) => {
+      console.error("Contacts backend load failed:", error);
+    });
+}, []);
 useEffect(() => {
   if (!hasLoadedBackend) return;
 
@@ -491,6 +507,25 @@ useEffect(() => {
     console.error("Backend sync failed:", error);
   });
 }, [maintenance, hasLoadedBackend]);
+
+useEffect(() => {
+  if (!hasLoadedBackend) return;
+
+  if (!Array.isArray(contacts) || contacts.length === 0) {
+    console.log("Skipped contacts sync because contacts is empty");
+    return;
+  }
+
+  fetch("https://martirent-backend-production.up.railway.app/contacts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(contacts),
+  }).catch((error) => {
+    console.error("Contacts backend sync failed:", error);
+  });
+}, [contacts, hasLoadedBackend]);
   useEffect(() => localStorage.setItem("documents", JSON.stringify(documents)), [documents]);
   useEffect(() => {
   if (!hasLoadedBackend) return;
