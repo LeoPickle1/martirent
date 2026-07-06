@@ -83,6 +83,9 @@ h3 {
   margin: 12px 0;
   border: 1px solid #eee;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .heroCard {
@@ -555,3 +558,4 @@ body,
 * {
   max-width: 100%;
 }
+/* Fix contacts tab sideways stretching */ .card h3, .card p, .card b { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; } .card { width: 100%; max-width: 100%; } .content { overflow-x: hidden; } .contactPage, .contactsPage { overflow-x: hidden; }
