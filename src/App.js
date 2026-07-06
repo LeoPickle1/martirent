@@ -453,8 +453,23 @@ const propertyNotes = [
 
   useEffect(() => localStorage.setItem("properties", JSON.stringify(properties)), [properties]);
   useEffect(() => localStorage.setItem("maintenanceAlerts", JSON.stringify(maintenance)), [maintenance]);
-  useEffect(() => {
-  setHasLoadedBackend(true);
+useEffect(() => {
+  fetch("https://martirent-backend-production.up.railway.app/maintenance")
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("Loaded maintenance from backend:", data);
+
+      if (Array.isArray(data) && data.length > 0) {
+        setMaintenance(data);
+        localStorage.setItem("maintenanceAlerts", JSON.stringify(data));
+      }
+
+      setHasLoadedBackend(true);
+    })
+    .catch((error) => {
+      console.error("Backend load failed:", error);
+      setHasLoadedBackend(true);
+    });
 }, []);
 
 useEffect(() => {
