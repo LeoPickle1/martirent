@@ -601,15 +601,21 @@ body,
   margin: 3px 0;
 }
 .spreadsheetPreview {
-  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   max-height: 70vh;
 }
 
 .spreadsheetPreview table {
   width: 100%;
-  min-width: 560px;
+  max-width: 100%;
+  min-width: 0;
+  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .spreadsheetPreview th,
@@ -618,6 +624,8 @@ body,
   padding: 8px 6px;
   text-align: left;
   vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .spreadsheetPreview th {
@@ -638,6 +646,8 @@ body,
   top: 50%;
   transform: translate(-50%, -50%);
   width: min(360px, calc(100vw - 28px));
+  max-width: calc(100vw - 28px);
+  min-width: 0;
   max-height: 82vh;
   background: white;
   border-radius: 18px;
