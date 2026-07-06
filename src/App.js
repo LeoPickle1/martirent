@@ -496,6 +496,30 @@ useEffect(() => {
 
   return () => clearInterval(interval);
 }, []);
+
+useEffect(() => {
+  const loadPropertiesFromBackend = () => {
+    fetch("https://martirent-backend-production.up.railway.app/properties")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Loaded properties from backend:", data);
+
+        if (Array.isArray(data) && data.length > 0) {
+          setProperties(data);
+          localStorage.setItem("properties", JSON.stringify(data));
+        }
+      })
+      .catch((error) => {
+        console.error("Properties backend load failed:", error);
+      });
+  };
+
+  loadPropertiesFromBackend();
+
+  const interval = setInterval(loadPropertiesFromBackend, 10000);
+
+  return () => clearInterval(interval);
+}, []);
 useEffect(() => {
   if (!hasLoadedBackend) return;
 
@@ -534,6 +558,25 @@ useEffect(() => {
     console.error("Contacts backend sync failed:", error);
   });
 }, [contacts, hasLoadedBackend]);
+
+useEffect(() => {
+  if (!hasLoadedBackend) return;
+
+  if (!Array.isArray(properties) || properties.length === 0) {
+    console.log("Skipped properties sync because properties is empty");
+    return;
+  }
+
+  fetch("https://martirent-backend-production.up.railway.app/properties", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(properties),
+  }).catch((error) => {
+    console.error("Properties backend sync failed:", error);
+  });
+}, [properties, hasLoadedBackend]);
   useEffect(() => localStorage.setItem("documents", JSON.stringify(documents)), [documents]);
   useEffect(() => {
   if (!hasLoadedBackend) return;
