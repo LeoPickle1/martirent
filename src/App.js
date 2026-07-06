@@ -1483,24 +1483,27 @@ const companyContact = findCompanyContact(m.company);
       <h3>{getMaintenanceTypeName(m.type)}</h3>
       <p><b>{t.properties}:</b> {m.property}</p>
       <p><b>{t.company}:</b> {m.company}</p>
-      {companyContact && (
-  <div className="contactMiniBox">
-    {companyContact.phone && (
-      <p><b>{t.phone}:</b> {companyContact.phone}</p>
-    )}
+      {companyContact &&
+        (companyContact.phone || companyContact.email || companyContact.website) && (
+          <div className="contactMiniBox">
+            {companyContact.phone && (
+              <p><b>{t.phone}:</b> {companyContact.phone}</p>
+            )}
 
-    {companyContact.email && (
-      <p><b>{t.email}:</b> {companyContact.email}</p>
-    )}
+            {companyContact.email && (
+              <p><b>{t.email}:</b> {companyContact.email}</p>
+            )}
 
-    {companyContact.website && (
-      <p><b>{t.website}:</b> {companyContact.website}</p>
-    )}
-  </div>
-)}
-      <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
-<p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
-      <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
+            {companyContact.website && (
+              <p><b>{t.website}:</b> {companyContact.website}</p>
+            )}
+          </div>
+        )}
+      <>
+        <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
+        <p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
+        <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
+      </>
       
       {(language === "en" ? m.notesEn : m.notesDe || m.notes) && (
   <div className="historyBox">
