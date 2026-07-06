@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import emailjs from "@emailjs/browser";
+import * as XLSX from "xlsx";
 import "./App.css";
 import { importedContacts } from "./contactsData";
 const maintenanceExtraNotes = {
@@ -272,6 +273,7 @@ const getMaintenanceTypeName = (type) => {
 };
   const [offlineNotice, setOfflineNotice] = useState(false);
   const [search, setSearch] = useState("");
+  const [showSpreadsheetPreview, setShowSpreadsheetPreview] = useState(false);
   const [maintenanceFilter, setMaintenanceFilter] = useState("all");
   const [maintenanceFormOpen, setMaintenanceFormOpen] = useState(false);
 const [editingMaintenanceIndex, setEditingMaintenanceIndex] = useState(null);
@@ -712,6 +714,10 @@ dashboard: "Home Page",
     backup: "Backup",
     exportBackup: "Export Backup",
     restoreBackup: "Restore Backup",
+    spreadsheet: "Spreadsheet",
+    updateSpreadsheet: "Update Spreadsheet",
+    showSpreadsheet: "Show Spreadsheet",
+    hideSpreadsheet: "Hide Spreadsheet",
     switchLanguage: "Deutsch",
     calendar: "Calendar",
 contacts: "Contacts",
@@ -776,6 +782,10 @@ dashboard: "Startseite",
     backup: "Sicherung",
     exportBackup: "Sicherung exportieren",
     restoreBackup: "Sicherung wiederherstellen",
+    spreadsheet: "Tabelle",
+    updateSpreadsheet: "Tabelle aktualisieren",
+    showSpreadsheet: "Tabelle anzeigen",
+    hideSpreadsheet: "Tabelle ausblenden",
     switchLanguage: "English",
     calendar: "Kalender",
 contacts: "Kontakte",
@@ -1333,6 +1343,101 @@ const cancelContactForm = () => {
     setContacts((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const getPropertyAddress = (name) => {
+    const property = properties.find((p) => p.name === name);
+    return property?.address || "";
+  };
+
+  const getMaintenanceNotes = (item) => {
+    if (language === "de") {
+      return item.notesDe || item.notes || item.notesEn || "";
+    }
+
+    return item.notesEn || item.notes || item.notesDe || "";
+  };
+
+  const getSpreadsheetMaintenanceRows = () =>
+    items.map((item, index) => ({
+      "Nr.": index + 1,
+      Liegenschaft: item.property,
+      Wartung: language === "de" ? getMaintenanceTypeName(item.type) : item.type,
+      Adresse: getPropertyAddress(item.property),
+      Firma: item.company || "",
+      "Zuletzt erledigt": item.lastDone || "",
+      "Nächste Fälligkeit": item.nextDue || "",
+      "Intervall (Jahre)": Number(item.intervalYears || 0) || "",
+      Bemerkungen: getMaintenanceNotes(item),
+    }));
+
+  const getSpreadsheetSummaryRows = () => {
+    const rows = [
+      ["Kennzahl", "Wert", "", "Liegenschaft", "Anzahl Wartungen"],
+      ["Total Wartungen", items.length, "", "", ""],
+      ["Überfällig", items.filter((item) => item.status === "overdue").length, "", "", ""],
+      ["Nicht überfällig", items.filter((item) => item.status !== "overdue").length, "", "", ""],
+      ["Nächste 30 Tage", items.filter((item) => item.days >= 0 && item.days <= 30).length, "", "", ""],
+      ["Nächste 365 Tage", items.filter((item) => item.days >= 0 && item.days <= 365).length, "", "", ""],
+    ];
+
+    const propertyCounts = properties
+      .slice()
+      .sort(comparePropertiesByOrder)
+      .map((property) => [
+        "",
+        "",
+        "",
+        property.name,
+        items.filter((item) => item.property === property.name).length,
+      ]);
+
+    return [...rows, ...propertyCounts];
+  };
+
+  const getSpreadsheetNotesRows = () => [
+    ["Liegenschaft", "Adresse", "Original-/Zusatznotizen"],
+    ...properties
+      .slice()
+      .sort(comparePropertiesByOrder)
+      .map((property) => [
+        property.name,
+        property.address,
+        propertyNotes
+          .filter((note) => note.property === property.name)
+          .map((note) => language === "de" ? note.noteDe || note.note : note.note || note.noteDe)
+          .filter(Boolean)
+          .join("\n"),
+      ]),
+  ];
+
+  const updateSpreadsheet = () => {
+    const workbook = XLSX.utils.book_new();
+
+    const maintenanceSheet = XLSX.utils.json_to_sheet(getSpreadsheetMaintenanceRows());
+    maintenanceSheet["!cols"] = [
+      { wch: 6 },
+      { wch: 18 },
+      { wch: 26 },
+      { wch: 28 },
+      { wch: 22 },
+      { wch: 16 },
+      { wch: 18 },
+      { wch: 16 },
+      { wch: 60 },
+    ];
+    XLSX.utils.book_append_sheet(workbook, maintenanceSheet, "Wartungsplan");
+
+    const summarySheet = XLSX.utils.aoa_to_sheet(getSpreadsheetSummaryRows());
+    summarySheet["!cols"] = [{ wch: 22 }, { wch: 12 }, { wch: 4 }, { wch: 20 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(workbook, summarySheet, "Zusammenfassung");
+
+    const notesSheet = XLSX.utils.aoa_to_sheet(getSpreadsheetNotesRows());
+    notesSheet["!cols"] = [{ wch: 18 }, { wch: 30 }, { wch: 80 }];
+    XLSX.utils.book_append_sheet(workbook, notesSheet, "Liegenschaftsnotizen");
+
+    XLSX.writeFile(workbook, "MartiRent_Wartungen_Deutsch_mit_Notizen.xlsx");
+    setAppNotice(language === "de" ? "Tabelle heruntergeladen" : "Spreadsheet downloaded");
+    setTimeout(() => setAppNotice(""), 3000);
+  };
   const exportBackup = () => {
     const backup = {
       properties,
@@ -1690,6 +1795,40 @@ const companyContact = findCompanyContact(m.company);
                   <p className="muted">{t.everythingGood}</p>
                 )}
               </div>
+
+ <h3>{t.spreadsheet}</h3>
+
+<div className="quickGrid">
+  <button onClick={updateSpreadsheet}>{t.updateSpreadsheet}</button>
+  <button onClick={() => setShowSpreadsheetPreview((value) => !value)}>
+    {showSpreadsheetPreview ? t.hideSpreadsheet : t.showSpreadsheet}
+  </button>
+</div>
+
+{showSpreadsheetPreview && (
+  <div className="card spreadsheetPreview">
+    <table>
+      <thead>
+        <tr>
+          <th>{language === "de" ? "Liegenschaft" : "Property"}</th>
+          <th>{language === "de" ? "Wartung" : "Maintenance"}</th>
+          <th>{t.company}</th>
+          <th>{t.nextDue}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {getSpreadsheetMaintenanceRows().map((row, i) => (
+          <tr key={i}>
+            <td>{row.Liegenschaft}</td>
+            <td>{row.Wartung}</td>
+            <td>{row.Firma}</td>
+            <td>{formatDateDisplay(row["Nächste Fälligkeit"])}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
 
  <h3>{t.backup}</h3>
 

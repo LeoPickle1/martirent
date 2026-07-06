@@ -600,3 +600,27 @@ body,
 .contactActions button {
   margin: 3px 0;
 }
+.spreadsheetPreview {
+  overflow-x: auto;
+}
+
+.spreadsheetPreview table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.spreadsheetPreview th,
+.spreadsheetPreview td {
+  border-bottom: 1px solid #eee;
+  padding: 8px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.spreadsheetPreview th {
+  color: #a80000;
+  font-weight: 800;
+  background: #fff5f5;
+}
