@@ -644,8 +644,18 @@ useEffect(() => {
 }, []);
   useEffect(() => {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.error("Service worker registration failed:", error);
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => registration.unregister());
+    }).catch((error) => {
+      console.error("Service worker cleanup failed:", error);
+    });
+  }
+
+  if ("caches" in window) {
+    caches.keys().then((cacheNames) => {
+      cacheNames.forEach((cacheName) => caches.delete(cacheName));
+    }).catch((error) => {
+      console.error("Cache cleanup failed:", error);
     });
   }
 }, []);
@@ -723,7 +733,7 @@ dashboard: "Home Page",
 contacts: "Contacts",
 home: "Home",
 props: "Properties",
-maint: "Maint.",
+maint: "Fixes",
 search: "Search...",
 add: "Add",
 edit: "Edit",
