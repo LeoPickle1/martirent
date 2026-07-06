@@ -558,4 +558,45 @@ body,
 * {
   max-width: 100%;
 }
-/* Fix contacts tab sideways stretching */ .card h3, .card p, .card b { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; } .card { width: 100%; max-width: 100%; } .content { overflow-x: hidden; } .contactPage, .contactsPage { overflow-x: hidden; }
+.card h3,
+.card p,
+.card b {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.contactsPage {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.contactCard {
+  min-width: 0;
+}
+
+.contactLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.contactLine span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.contactActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.contactActions button {
+  margin: 3px 0;
+}

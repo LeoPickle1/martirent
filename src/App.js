@@ -2242,108 +2242,111 @@ setTab("properties");
           )}
 
           {tab === "contacts" && (
-  <>
-    <div className="sectionTop">
-      <h2>{t.contacts}</h2>
-      <button className="primaryBtn" onClick={addContact}>
-        + {t.add}
-      </button>
-    </div>
-{contactFormOpen && (
-  <>
-    <div className="formOverlay" onClick={cancelContactForm}></div>
-    <div className="card formCard">
-    <h3>
-      {editingContactIndex === null ? `+ ${t.add}` : t.edit} {t.contacts}
-    </h3>
+            <div className="contactsPage">
+              <div className="sectionTop">
+                <h2>{t.contacts}</h2>
+                <button className="primaryBtn" onClick={addContact}>
+                  + {t.add}
+                </button>
+              </div>
 
-    <label>{t.company}</label>
-    <input
-      className="formInput"
-      value={contactForm.company}
-      onChange={(e) =>
-        setContactForm({
-          ...contactForm,
-          company: e.target.value,
-        })
-      }
-      placeholder={t.companyQuestion}
-    />
+              {contactFormOpen && (
+                <>
+                  <div className="formOverlay" onClick={cancelContactForm}></div>
+                  <div className="card formCard">
+                    <h3>
+                      {editingContactIndex === null ? `+ ${t.add}` : t.edit} {t.contacts}
+                    </h3>
 
-    <label>{t.phone}</label>
-    <input
-      className="formInput"
-      value={contactForm.phone}
-      onChange={(e) =>
-        setContactForm({
-          ...contactForm,
-          phone: e.target.value,
-        })
-      }
-      placeholder={t.phoneQuestion}
-    />
+                    <label>{t.company}</label>
+                    <input
+                      className="formInput"
+                      value={contactForm.company}
+                      onChange={(e) =>
+                        setContactForm({
+                          ...contactForm,
+                          company: e.target.value,
+                        })
+                      }
+                      placeholder={t.companyQuestion}
+                    />
 
-    <label>{t.email}</label>
-    <input
-      className="formInput"
-      value={contactForm.email}
-      onChange={(e) =>
-        setContactForm({
-          ...contactForm,
-          email: e.target.value,
-        })
-      }
-      placeholder={t.emailQuestion}
-    />
+                    <label>{t.phone}</label>
+                    <input
+                      className="formInput"
+                      value={contactForm.phone}
+                      onChange={(e) =>
+                        setContactForm({
+                          ...contactForm,
+                          phone: e.target.value,
+                        })
+                      }
+                      placeholder={t.phoneQuestion}
+                    />
 
-    <label>{t.website}</label>
-    <input
-      className="formInput"
-      value={contactForm.website}
-      onChange={(e) =>
-        setContactForm({
-          ...contactForm,
-          website: e.target.value,
-        })
-      }
-      placeholder={t.websiteQuestion}
-    />
+                    <label>{t.email}</label>
+                    <input
+                      className="formInput"
+                      value={contactForm.email}
+                      onChange={(e) =>
+                        setContactForm({
+                          ...contactForm,
+                          email: e.target.value,
+                        })
+                      }
+                      placeholder={t.emailQuestion}
+                    />
 
-    <div className="formButtons">
-      <button className="primaryBtn" onClick={saveContactForm}>
-        {editingContactIndex === null ? t.add : t.edit}
-      </button>
+                    <label>{t.website}</label>
+                    <input
+                      className="formInput"
+                      value={contactForm.website}
+                      onChange={(e) =>
+                        setContactForm({
+                          ...contactForm,
+                          website: e.target.value,
+                        })
+                      }
+                      placeholder={t.websiteQuestion}
+                    />
 
-      <button onClick={cancelContactForm}>
-        {language === "en" ? "Cancel" : "Abbrechen"}
-      </button>
-    </div>
-   </div>
-  </>
-)}
-   {filteredContacts.map((c, i) => {
-  const originalIndex = contacts.indexOf(c);
+                    <div className="formButtons">
+                      <button className="primaryBtn" onClick={saveContactForm}>
+                        {editingContactIndex === null ? t.add : t.edit}
+                      </button>
 
-  return (
-    <div className="card" key={i}>
-      <h3>{c.company}</h3>
-      <p><b>{t.phone}:</b> {c.phone || "-"}</p>
-      <p><b>{t.email}:</b> {c.email || "-"}</p>
-      <p><b>{t.website}:</b> {c.website || "-"}</p>
+                      <button onClick={cancelContactForm}>
+                        {language === "en" ? "Cancel" : "Abbrechen"}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
 
-      <button onClick={() => editContact(originalIndex)}>
-        {t.edit}
-      </button>
+              {filteredContacts.map((c, i) => {
+                const originalIndex = contacts.indexOf(c);
 
-      <button className="dangerBtn" onClick={() => deleteContact(originalIndex)}>
-        {t.delete}
-      </button>
-    </div>
-  );
-})}
-  </>
-)}
+                return (
+                  <div className="card contactCard" key={i}>
+                    <h3>{c.company}</h3>
+                    <p className="contactLine"><b>{t.phone}:</b> <span>{c.phone || "-"}</span></p>
+                    <p className="contactLine"><b>{t.email}:</b> <span>{c.email || "-"}</span></p>
+                    <p className="contactLine"><b>{t.website}:</b> <span>{c.website || "-"}</span></p>
 
+                    <div className="contactActions">
+                      <button onClick={() => editContact(originalIndex)}>
+                        {t.edit}
+                      </button>
+
+                      <button className="dangerBtn" onClick={() => deleteContact(originalIndex)}>
+                        {t.delete}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
 <div className="nav">  <button className={tab === "home" ? "active" : ""} onClick={() => openTab("home")}>
