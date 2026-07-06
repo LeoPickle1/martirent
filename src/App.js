@@ -851,6 +851,9 @@ const compareMaintenanceByPropertyOrder = (a, b) => {
   const propertyCompare = a.property.localeCompare(b.property);
   if (propertyCompare !== 0) return propertyCompare;
 
+  const daysCompare = a.days - b.days;
+  if (daysCompare !== 0) return daysCompare;
+
   return a.type.localeCompare(b.type);
 };
 const t = text[language];
@@ -1026,12 +1029,7 @@ useEffect(() => {
       m.company.toLowerCase().includes(s)
     );
   })
-  .sort((a, b) => {
-    if (a.status === "overdue" && b.status !== "overdue") return -1;
-    if (a.status !== "overdue" && b.status === "overdue") return 1;
-
-    return compareMaintenanceByPropertyOrder(a, b);
-  });
+  .sort(compareMaintenanceByPropertyOrder);
   const filteredProperties = properties
   .filter((p) => {
     const s = search.toLowerCase();
