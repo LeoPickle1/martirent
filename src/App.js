@@ -663,7 +663,6 @@ useEffect(() => {
 }, []);
 useEffect(() => {
   if (!highlightMaintenance) return;
-  if (tab !== "maintenance") return;
 
   setTimeout(() => {
     const el = document.getElementById(highlightMaintenance);
@@ -677,9 +676,9 @@ useEffect(() => {
       el.classList.add("flashCard");
 
       setTimeout(() => {
-  el.classList.remove("flashCard");
-  setHighlightMaintenance(null);
-}, 1800);
+        el.classList.remove("flashCard");
+        setHighlightMaintenance(null);
+      }, 1800);
     }
   }, 200);
 }, [highlightMaintenance, tab]);
@@ -710,7 +709,6 @@ dashboard: "Home Page",
     maintenance: "Maintenance",
     overdue: "Overdue",
     needsAttention: "Needs Attention",
-    quickActions: "Quick Actions",
     backup: "Backup",
     exportBackup: "Export Backup",
     restoreBackup: "Restore Backup",
@@ -778,7 +776,6 @@ dashboard: "Startseite",
     maintenance: "Unterhalt",
     overdue: "Überfällig",
     needsAttention: "Benötigt Aufmerksamkeit",
-    quickActions: "Schnellzugriff",
     backup: "Sicherung",
     exportBackup: "Sicherung exportieren",
     restoreBackup: "Sicherung wiederherstellen",
@@ -1029,11 +1026,8 @@ useEffect(() => {
 
   const overdue = filteredItems.filter((m) => m.status === "overdue");
   const dueSoon = filteredItems.filter((m) => m.status === "warning");
-  const attentionItems = overdue
-  .sort((a, b) => a.days - b.days)
-  .slice(0, 5);
-
   const allAttentionItems = [...overdue, ...dueSoon].sort((a, b) => a.days - b.days);
+  const homeAttentionItems = allAttentionItems.slice(0, 5);
   const maintenancePageItems = filteredItems.filter((m) => {
   if (maintenanceFilter === "all") return true;
   if (maintenanceFilter === "overdue") return m.status === "overdue";
@@ -1395,6 +1389,34 @@ const propertyNotesForSelected = selectedProperty
       (n) => n.property === selectedProperty.name || n.property === "Allgemein"
     )
   : [];
+  const makeMaintenanceId = (m) =>
+    `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
+      .replace(/\s+/g, "-")
+      .replace(/[^a-zA-Z0-9-_]/g, "");
+
+  const makeContactId = (index) => `contact-${index}`;
+
+  const jumpToMaintenance = (m) => {
+    setHighlightMaintenance(makeMaintenanceId(m));
+    setSearch("");
+    setSelectedProperty(null);
+    setTab("maintenance");
+  };
+
+  const jumpToContact = (contact) => {
+    const originalIndex = contacts.indexOf(contact);
+    setHighlightMaintenance(makeContactId(originalIndex));
+    setSearch("");
+    setSelectedProperty(null);
+    setTab("contacts");
+  };
+
+  const jumpToProperty = (property) => {
+    setSelectedProperty(property);
+    setSearch("");
+    setHighlightMaintenance(null);
+    setTab("properties");
+  };
   const openTab = (newTab) => {
   setSearch("");
   setSelectedProperty(null);
@@ -1424,9 +1446,7 @@ const openMaintenanceTab = () => {
       item.lastDone === m.lastDone
   );
 const safeIndex = originalIndex === -1 ? i : originalIndex;
-  const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
-    .replace(/\s+/g, "-")
-    .replace(/[^a-zA-Z0-9-_]/g, "");
+  const maintenanceId = makeMaintenanceId(m);
 const historyDates = Array.from(
   new Set([...(m.history || []), m.lastDone].filter(Boolean))
 ).reverse();
@@ -1573,11 +1593,7 @@ const companyContact = findCompanyContact(m.company);
         filteredProperties.map((p, i) => (
           <p
             key={i}
-            onClick={() => {
-              setSelectedProperty(p);
-              setSearch("");
-setTab("properties");
-            }}
+            onClick={() => jumpToProperty(p)}
             style={{ cursor: "pointer" }}
           >
             🏢 {p.name} — {p.address}
@@ -1594,15 +1610,7 @@ setTab("properties");
         filteredItems.map((m, i) => (
           <p
   key={i}
-  onClick={() => {
-    const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
-      .replace(/\s+/g, "-")
-      .replace(/[^a-zA-Z0-9-_]/g, "");
-
-    setHighlightMaintenance(maintenanceId);
-    setSearch("");
-    setTab("maintenance");
-  }}
+  onClick={() => jumpToMaintenance(m)}
   style={{ cursor: "pointer" }}
 >
   🔧 {m.property}: {getMaintenanceTypeName(m.type)} — {m.company}
@@ -1619,10 +1627,7 @@ setTab("properties");
         filteredContacts.map((c, i) => (
           <p
             key={i}
-         onClick={() => {
-  setSearch("");
-  openTab("contacts");
-}}
+         onClick={() => jumpToContact(c)}
             style={{ cursor: "pointer" }}
           >
             📞 {c.company}
@@ -1666,18 +1671,23 @@ setTab("properties");
     <p>{t.maintenance}</p>
   </div>
 </div>
+              <h3>{t.needsAttention}</h3>
 
-             
-
-              
-
-              <h3>{t.quickActions}</h3>
-
-              <div className="quickGrid">
-  <button onClick={() => openTab("properties")}>🏢 {t.properties}</button>
-  <button onClick={openMaintenanceTab}>🔧 {t.maintenance}</button>
-  <button onClick={() => openTab("calendar")}>📅 {t.calendar}</button>
-</div>
+              <div className="card">
+                {homeAttentionItems.length ? (
+                  homeAttentionItems.map((m, i) => (
+                    <button
+                      className="attentionBtn"
+                      key={i}
+                      onClick={() => jumpToMaintenance(m)}
+                    >
+                      <b>{m.property}</b>: {getMaintenanceTypeName(m.type)} - {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `due in ${m.days} days`}
+                    </button>
+                  ))
+                ) : (
+                  <p className="muted">{t.everythingGood}</p>
+                )}
+              </div>
 
  <h3>{t.backup}</h3>
 
@@ -2133,9 +2143,7 @@ setTab("properties");
   key={j}
   className="taskText"
   onClick={() => {
-    const maintenanceId = `maintenance-${m.property}-${m.type}-${m.company}-${m.nextDue}`
-      .replace(/\s+/g, "-")
-      .replace(/[^a-zA-Z0-9-_]/g, "");
+    const maintenanceId = makeMaintenanceId(m);
 
     setHighlightMaintenance(maintenanceId);
     setTab("maintenance");
@@ -2238,7 +2246,7 @@ setTab("properties");
                 const originalIndex = contacts.indexOf(c);
 
                 return (
-                  <div className="card contactCard" key={i}>
+                  <div className="card contactCard" id={makeContactId(originalIndex)} key={i}>
                     <h3>{c.company}</h3>
                     <p className="contactLine"><b>{t.phone}:</b> <span>{c.phone || "-"}</span></p>
                     <p className="contactLine"><b>{t.email}:</b> <span>{c.email || "-"}</span></p>
