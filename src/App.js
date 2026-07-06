@@ -474,19 +474,27 @@ useEffect(() => {
 
 
 useEffect(() => {
-  fetch("https://martirent-backend-production.up.railway.app/contacts")
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Loaded contacts from backend:", data);
+  const loadContactsFromBackend = () => {
+    fetch("https://martirent-backend-production.up.railway.app/contacts")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Loaded contacts from backend:", data);
 
-      if (Array.isArray(data) && data.length > 0) {
-        setContacts(data);
-        localStorage.setItem("savedContacts", JSON.stringify(data));
-      }
-    })
-    .catch((error) => {
-      console.error("Contacts backend load failed:", error);
-    });
+        if (Array.isArray(data) && data.length > 0) {
+          setContacts(data);
+          localStorage.setItem("savedContacts", JSON.stringify(data));
+        }
+      })
+      .catch((error) => {
+        console.error("Contacts backend load failed:", error);
+      });
+  };
+
+  loadContactsFromBackend();
+
+  const interval = setInterval(loadContactsFromBackend, 10000);
+
+  return () => clearInterval(interval);
 }, []);
 useEffect(() => {
   if (!hasLoadedBackend) return;
