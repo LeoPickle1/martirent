@@ -293,7 +293,7 @@ const [propertyForm, setPropertyForm] = useState({
   name: "",
   address: "",
 });
-  const [documentFormOpen, setDocumentFormOpen] = useState(false);
+
   const [contactFormOpen, setContactFormOpen] = useState(false);
 const [editingContactIndex, setEditingContactIndex] = useState(null);
 const [contactForm, setContactForm] = useState({
@@ -302,11 +302,6 @@ const [contactForm, setContactForm] = useState({
   email: "",
   website: "",
 });
-const [editingDocumentIndex, setEditingDocumentIndex] = useState(null);
-const [documentForm, setDocumentForm] = useState({
-  name: "",
-  type: "",
-}); 
   const [calendarOffset, setCalendarOffset] = useState(0);
   const [appNotice, setAppNotice] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(null);
@@ -1343,57 +1338,8 @@ const deleteMaintenance = (index) => {
 
  
 
-  const addDocument = () => {
-  setEditingDocumentIndex(null);
-  setDocumentForm({
-    name: "",
-    type: "",
-  });
-  setDocumentFormOpen(true);
-};
-const editDocument = (index) => {
-  const current = documents[index];
-
-  setEditingDocumentIndex(index);
-  setDocumentForm({
-    name: current.name || "",
-    type: current.type || "",
-  });
-  setDocumentFormOpen(true);
-};
-const saveDocumentForm = () => {
-  if (!documentForm.name || !documentForm.type) return;
-
-  if (editingDocumentIndex === null) {
-    setDocuments((prev) => [...prev, documentForm]);
-  } else {
-    const updated = [...documents];
-    updated[editingDocumentIndex] = documentForm;
-    setDocuments(updated);
-  }
-
-  setDocumentFormOpen(false);
-  setEditingDocumentIndex(null);
-  setDocumentForm({
-    name: "",
-    type: "",
-  });
-};
-
-const cancelDocumentForm = () => {
-  setDocumentFormOpen(false);
-  setEditingDocumentIndex(null);
-  setDocumentForm({
-    name: "",
-    type: "",
-  });
-};
-  const deleteDocument = (index) => {
-  const confirmDelete = window.confirm(t.deleteDocumentConfirm);
-  if (!confirmDelete) return;
-
-  setDocuments((prev) => prev.filter((_, i) => i !== index));
-};
+ 
+  
 
   const addContact = () => {
   setEditingContactIndex(null);
@@ -1770,25 +1716,7 @@ setTab("properties");
       )}
     </div>
 
-    <div className="card">
-      <h3>{t.documents}</h3>
-      {filteredDocuments.length ? (
-        filteredDocuments.map((d, i) => (
-          <p
-            key={i}
-onClick={() => {
-  setSearch("");
-  openTab("documents");
-}}
-            style={{ cursor: "pointer" }}
-          >
-            📄 {d.name} — {d.type}
-          </p>
-        ))
-      ) : (
-        <p className="muted">{t.noDocumentsFound}</p>
-      )}
-    </div>
+    
   </>
 ) : (
   <>
@@ -1838,7 +1766,6 @@ onClick={() => {
   <button onClick={() => openTab("properties")}>🏢 {t.properties}</button>
   <button onClick={openMaintenanceTab}>🔧 {t.maintenance}</button>
   <button onClick={() => openTab("calendar")}>📅 {t.calendar}</button>
-  <button onClick={() => openTab("documents")}>📄 {t.documents}</button>
 </div>
 
  <h3>{t.backup}</h3>
@@ -2417,88 +2344,9 @@ onClick={() => {
   </>
 )}
 
-          {tab === "documents" && (
-            <>
-              <div className="sectionTop">
-                <h2>{t.documents}</h2>
-                <button className="primaryBtn" onClick={addDocument}>+ {t.add}</button>
-              </div>
-{documentFormOpen && (
-  <>
-    <div className="formOverlay" onClick={cancelDocumentForm}></div>
-    <div className="card formCard">
-    <h3>
-      {editingDocumentIndex === null
-        ? `+ ${t.add}`
-        : t.edit}{" "}
-      {t.documents}
-    </h3>
-
-    <label>Document / Company Name</label>
-    <input
-      className="formInput"
-      value={documentForm.name}
-      onChange={(e) =>
-        setDocumentForm({
-          ...documentForm,
-          name: e.target.value,
-        })
-      }
-      placeholder={t.documentNameQuestion}
-    />
-
-    <label>Type / Notes</label>
-    <input
-      className="formInput"
-      value={documentForm.type}
-      onChange={(e) =>
-        setDocumentForm({
-          ...documentForm,
-          type: e.target.value,
-        })
-      }
-      placeholder={t.typeNotesQuestion}
-    />
-
-    <div className="formButtons">
-      <button className="primaryBtn" onClick={saveDocumentForm}>
-        {editingDocumentIndex === null ? t.add : t.edit}
-      </button>
-
-      <button onClick={cancelDocumentForm}>
-        {language === "en" ? "Cancel" : "Abbrechen"}
-      </button>
-    </div>
-   </div>
-  </>
-)}
-              {filteredDocuments.map((d, i) => {
-  const originalIndex = documents.indexOf(d);
-
-  return (
-    <div className="card" key={i}>
-      <h3>📄 {d.name}</h3>
-      <p className="muted">{d.type}</p>
-
-      <button onClick={() => editDocument(originalIndex)}>
-        {t.edit}
-      </button>
-
-      <button
-        className="dangerBtn"
-        onClick={() => deleteDocument(originalIndex)}
-      >
-        {t.delete}
-      </button>
-    </div>
-  );
-})}
-            </>
-          )}
         </div>
 
-        <div className="nav navSix">
-  <button className={tab === "home" ? "active" : ""} onClick={() => openTab("home")}>
+<div className="nav">  <button className={tab === "home" ? "active" : ""} onClick={() => openTab("home")}>
     🏠<span>{t.home}</span>
   </button>
 
@@ -2515,12 +2363,9 @@ onClick={() => {
   </button>
 
   <button className={tab === "contacts" ? "active" : ""} onClick={() => openTab("contacts")}>
-    📞<span>{t.contacts}</span>
-  </button>
+  📞<span>{t.contacts}</span>
+</button>
 
-  <button className={tab === "documents" ? "active" : ""} onClick={() => openTab("documents")}>
-    📄<span>{t.documents}</span>
-  </button>
 </div>
       </div>
     </div>
