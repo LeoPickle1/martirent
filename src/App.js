@@ -704,7 +704,7 @@ completeMaintenanceConfirm: "Mark this maintenance as complete? This will update
     appSubtitle: "Swiss Property Manager",
 dashboard: "Home Page",
     welcome: "Welcome to MartiRent",
-    description: "Manage properties, maintenance, contacts, and documents in one place.",
+    description: "Manage properties, maintenance, and contacts in one place.",
     properties: "Properties",
     maintenance: "Maintenance",
     overdue: "Overdue",
@@ -714,7 +714,6 @@ dashboard: "Home Page",
     restoreBackup: "Restore Backup",
     switchLanguage: "Deutsch",
     calendar: "Calendar",
-documents: "Documents",
 contacts: "Contacts",
 home: "Home",
 props: "Properties",
@@ -728,7 +727,6 @@ viewDetails: "View Details",
 propertyDetails: "Property Details",
 address: "Address",
 maintenanceItems: "Maintenance items",
-linkedDocuments: "Linked documents",
 lastDone: "Last done",
 nextDue: "Next due",
 status: "Status",
@@ -747,7 +745,6 @@ searchResults: "Search Results",
 noPropertiesFound: "No properties found.",
 noMaintenanceFound: "No maintenance found.",
 noContactsFound: "No contacts found.",
-noDocumentsFound: "No documents found.",
   },
   de: {
     propertyNameQuestion: "Name der Immobilie?",
@@ -781,7 +778,6 @@ dashboard: "Startseite",
     restoreBackup: "Sicherung wiederherstellen",
     switchLanguage: "English",
     calendar: "Kalender",
-documents: "Dokumente",
 contacts: "Kontakte",
 home: "Start",
 props: "Immobilien",
@@ -795,7 +791,6 @@ viewDetails: "Details anzeigen",
 propertyDetails: "Immobilien-Details",
 address: "Adresse",
 maintenanceItems: "Unterhaltsarbeiten",
-linkedDocuments: "Verknüpfte Dokumente",
 lastDone: "Zuletzt erledigt",
 nextDue: "Nächster Termin",
 status: "Status",
@@ -814,7 +809,6 @@ searchResults: "Suchergebnisse",
 noPropertiesFound: "Keine Immobilien gefunden.",
 noMaintenanceFound: "Kein Unterhalt gefunden.",
 noContactsFound: "Keine Kontakte gefunden.",
-noDocumentsFound: "Keine Dokumente gefunden.",
   },
 };
 
@@ -1004,13 +998,6 @@ useEffect(() => {
   .filter((p) => {
     const s = search.toLowerCase();
     return p.name.toLowerCase().includes(s) || p.address.toLowerCase().includes(s);
-  })
-  .sort((a, b) => a.name.localeCompare(b.name));
-
-  const filteredDocuments = documents
-  .filter((d) => {
-    const s = search.toLowerCase();
-    return d.name.toLowerCase().includes(s) || d.type.toLowerCase().includes(s);
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -1374,16 +1361,6 @@ const cancelContactForm = () => {
     ? items.filter((m) => m.property === selectedProperty.name)
     : [];
 
-  const propertyDocuments = selectedProperty
-  ? documents.filter((d) =>
-      propertyMaintenance.some(
-        (m) =>
-          m.company.toLowerCase().includes(d.name.toLowerCase()) ||
-          d.name.toLowerCase().includes(m.company.toLowerCase())
-      )
-    )
-  : [];
-
 const propertyNotesForSelected = selectedProperty
   ? propertyNotes.filter(
       (n) => n.property === selectedProperty.name || n.property === "Allgemein"
@@ -1447,9 +1424,6 @@ const openMaintenanceTab = () => {
   );
 const safeIndex = originalIndex === -1 ? i : originalIndex;
   const maintenanceId = makeMaintenanceId(m);
-const historyDates = Array.from(
-  new Set([...(m.history || []), m.lastDone].filter(Boolean))
-).reverse();
 const companyContact = findCompanyContact(m.company);
   return (
     <div className={`card ${m.status}`} id={maintenanceId} key={i}>
@@ -1835,20 +1809,37 @@ const companyContact = findCompanyContact(m.company);
                     <h3>{t.propertyDetails}</h3>
                     <p><b>{t.address}:</b> {selectedProperty.address}</p>
                     <p><b>{t.maintenanceItems}:</b> {propertyMaintenance.length}</p>
-                    <p><b>{t.linkedDocuments}:</b> {propertyDocuments.length}</p>
                   </div>
 
                   <h3>{t.maintenance}</h3>
+                  {propertyMaintenance.length ? propertyMaintenance.map((m, i) => {
+                    const originalIndex = maintenance.findIndex(
+                      (item) =>
+                        item.property === m.property &&
+                        item.type === m.type &&
+                        item.company === m.company &&
+                        item.lastDone === m.lastDone
+                    );
+                    const safeIndex = originalIndex === -1 ? i : originalIndex;
 
-                  {propertyMaintenance.length ? propertyMaintenance.map((m, i) => (
-                    <div className={`card ${m.status}`} key={i}>
-                      <h3>{m.type}</h3>
-                      <p><b>{t.company}:</b> {m.company}</p>
-                      <p><b>{t.lastDone}:</b> {m.lastDone}</p>
-                      <p><b>{t.nextDue}:</b> {formatDateDisplay(t.nextDue)}</p>
-                      <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
-                    </div>
-                  )) : (
+                    return (
+                      <div className={`card ${m.status}`} key={i}>
+                        <h3>{getMaintenanceTypeName(m.type)}</h3>
+                        <p><b>{t.company}:</b> {m.company}</p>
+                        <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
+                        <p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
+                        <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
+
+                        <button onClick={() => editMaintenance(safeIndex)}>
+                          {t.edit}
+                        </button>
+
+                        <button className="dangerBtn" onClick={() => deleteMaintenance(safeIndex)}>
+                          {t.delete}
+                        </button>
+                      </div>
+                    );
+                  }) : (
                     <p className="muted">{t.noMaintenance}</p>
                   )}
                   <h3>{t.notes}</h3>
