@@ -812,6 +812,37 @@ noContactsFound: "Keine Kontakte gefunden.",
   },
 };
 
+const propertyOrder = [
+  "Eich",
+  "Sempach",
+  "Langnau",
+  "Hilterfingen",
+  "Aeschlen",
+  "Traube",
+  "Kundmatt",
+  "Grenchen",
+];
+
+const getPropertyOrder = (name) => {
+  const index = propertyOrder.indexOf(name);
+  return index === -1 ? propertyOrder.length : index;
+};
+
+const comparePropertiesByOrder = (a, b) => {
+  const orderCompare = getPropertyOrder(a.name) - getPropertyOrder(b.name);
+  if (orderCompare !== 0) return orderCompare;
+  return a.name.localeCompare(b.name);
+};
+
+const compareMaintenanceByPropertyOrder = (a, b) => {
+  const orderCompare = getPropertyOrder(a.property) - getPropertyOrder(b.property);
+  if (orderCompare !== 0) return orderCompare;
+
+  const propertyCompare = a.property.localeCompare(b.property);
+  if (propertyCompare !== 0) return propertyCompare;
+
+  return a.type.localeCompare(b.type);
+};
 const t = text[language];
 const todayText = new Date().toLocaleDateString(
   language === "en" ? "en-CA" : "de-CH",
@@ -989,17 +1020,14 @@ useEffect(() => {
     if (a.status === "overdue" && b.status !== "overdue") return -1;
     if (a.status !== "overdue" && b.status === "overdue") return 1;
 
-    const propertyCompare = a.property.localeCompare(b.property);
-    if (propertyCompare !== 0) return propertyCompare;
-
-    return a.type.localeCompare(b.type);
+    return compareMaintenanceByPropertyOrder(a, b);
   });
   const filteredProperties = properties
   .filter((p) => {
     const s = search.toLowerCase();
     return p.name.toLowerCase().includes(s) || p.address.toLowerCase().includes(s);
   })
-  .sort((a, b) => a.name.localeCompare(b.name));
+  .sort(comparePropertiesByOrder);
 
   const filteredContacts = contacts.filter((c) => {
     const s = search.toLowerCase();
@@ -1358,7 +1386,7 @@ const cancelContactForm = () => {
   };
 
   const propertyMaintenance = selectedProperty
-    ? items.filter((m) => m.property === selectedProperty.name)
+    ? items.filter((m) => m.property === selectedProperty.name).sort(compareMaintenanceByPropertyOrder)
     : [];
 
 const propertyNotesForSelected = selectedProperty
