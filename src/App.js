@@ -1812,7 +1812,7 @@ const companyContact = findCompanyContact(m.company);
                       key={i}
                       onClick={() => jumpToMaintenance(m)}
                     >
-                      <b>{m.property}</b>: {getMaintenanceTypeName(m.type)} - {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `due in ${m.days} days`}
+                      <b>{m.property}</b>: {getMaintenanceTypeName(m.type)} - {m.days < 0 ? (language === "en" ? `${Math.abs(m.days)} days overdue` : `seit ${Math.abs(m.days)} Tagen überfällig`) : (language === "en" ? `due in ${m.days} days` : `noch ${m.days} Tage`)}
                     </button>
                   ))
                 ) : (
