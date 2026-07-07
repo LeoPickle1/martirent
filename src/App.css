@@ -736,6 +736,32 @@ body,
   width: 33%;
 }
 
+.spreadsheetTableDe td:nth-child(2) {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: auto;
+}
+
+.spreadsheetTableDe th:nth-child(1),
+.spreadsheetTableDe td:nth-child(1) {
+  width: 24%;
+}
+
+.spreadsheetTableDe th:nth-child(2),
+.spreadsheetTableDe td:nth-child(2) {
+  width: 24%;
+}
+
+.spreadsheetTableDe th:nth-child(3),
+.spreadsheetTableDe td:nth-child(3) {
+  width: 15%;
+}
+
+.spreadsheetTableDe th:nth-child(4),
+.spreadsheetTableDe td:nth-child(4) {
+  width: 37%;
+}
+
 .spreadsheetOverlay {
   position: fixed;
   inset: 0;
