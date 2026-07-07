@@ -2090,28 +2090,28 @@ const companyContact = findCompanyContact(m.company);
     className={maintenanceFilter === "all" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("all")}
   >
-    {t.all} ({filteredItems.length})
+    {t.all}({filteredItems.length})
   </button>
 
   <button
     className={maintenanceFilter === "overdue" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("overdue")}
   >
-    {t.overdue} ({overdue.length})
+    {t.overdue}({overdue.length})
   </button>
 
   <button
     className={maintenanceFilter === "dueSoon" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("dueSoon")}
   >
-    {t.dueSoon} ({dueSoon.length})
+    {t.dueSoon}({dueSoon.length})
   </button>
 
   <button
     className={maintenanceFilter === "future" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("future")}
   >
-    {t.future} ({futureItems.length})
+    {t.future}({futureItems.length})
   </button>
 </div>
 {maintenanceFormOpen && (

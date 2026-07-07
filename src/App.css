@@ -526,15 +526,14 @@ input[type="number"]::-webkit-outer-spin-button {
 .filterRow button {
   min-width: 0;
   white-space: nowrap;
-  padding: 9px 6px;
+  padding: 8px 4px;
   border-radius: 999px;
   border: none;
   font-weight: 700;
   background: #f1f5f9;
-  font-size: 12px;
+  font-size: 10px;
+  line-height: 1.1;
   text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .filterRow .activeFilter {
