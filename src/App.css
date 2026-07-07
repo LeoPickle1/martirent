@@ -709,6 +709,33 @@ body,
   hyphens: auto;
 }
 
+.spreadsheetTableEn th {
+  white-space: nowrap;
+  font-size: 8px;
+  line-height: 1;
+  padding: 9px 3px;
+}
+
+.spreadsheetTableEn th:nth-child(1),
+.spreadsheetTableEn td:nth-child(1) {
+  width: 21%;
+}
+
+.spreadsheetTableEn th:nth-child(2),
+.spreadsheetTableEn td:nth-child(2) {
+  width: 26%;
+}
+
+.spreadsheetTableEn th:nth-child(3),
+.spreadsheetTableEn td:nth-child(3) {
+  width: 20%;
+}
+
+.spreadsheetTableEn th:nth-child(4),
+.spreadsheetTableEn td:nth-child(4) {
+  width: 33%;
+}
+
 .spreadsheetOverlay {
   position: fixed;
   inset: 0;

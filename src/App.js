@@ -2492,7 +2492,7 @@ const companyContact = findCompanyContact(m.company);
       <div className="spreadsheetPreview">
         <div className="spreadsheetPreviewSection">
           <h4>{language === "de" ? "Wartungsplan" : "Maintenance Plan"}</h4>
-          <table>
+          <table className={language === "de" ? "spreadsheetTable spreadsheetTableDe" : "spreadsheetTable spreadsheetTableEn"}>
             <thead>
               <tr>
                 <th>{language === "de" ? "Liegenschaft" : "Property"}</th>
