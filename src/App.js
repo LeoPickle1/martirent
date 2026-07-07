@@ -912,7 +912,7 @@ const formatDateDisplay = (dateString) => {
 
   if (Number.isNaN(date.getTime())) return dateString;
 
-  const locale = language === "de" ? "de-CH" : "en-GB";
+  const locale = language === "de" ? "de-DE" : "en-GB";
 
   return date
     .toLocaleDateString(locale, {
