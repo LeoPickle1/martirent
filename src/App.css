@@ -744,22 +744,30 @@ body,
 
 .spreadsheetTableDe th:nth-child(1),
 .spreadsheetTableDe td:nth-child(1) {
-  width: 24%;
+  width: 23%;
 }
 
 .spreadsheetTableDe th:nth-child(2),
 .spreadsheetTableDe td:nth-child(2) {
-  width: 24%;
+  width: 27%;
 }
 
 .spreadsheetTableDe th:nth-child(3),
 .spreadsheetTableDe td:nth-child(3) {
-  width: 15%;
+  width: 19%;
 }
 
 .spreadsheetTableDe th:nth-child(4),
 .spreadsheetTableDe td:nth-child(4) {
-  width: 37%;
+  width: 31%;
+}
+
+.spreadsheetTableDe td:nth-child(1),
+.spreadsheetTableDe td:nth-child(3),
+.spreadsheetTableDe td:nth-child(4) {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: auto;
 }
 
 .spreadsheetOverlay {
