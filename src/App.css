@@ -675,36 +675,40 @@ body,
   color: #a80000;
   font-weight: 800;
   background: #fff5f5;
-  white-space: nowrap;
-  font-size: 10px;
-  line-height: 1.15;
-  padding: 9px 4px;
+  white-space: normal;
+  font-size: 9px;
+  line-height: 1.1;
+  padding: 8px 4px;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .spreadsheetPreview th:nth-child(1),
 .spreadsheetPreview td:nth-child(1) {
-  width: 24%;
+  width: 28%;
 }
 
 .spreadsheetPreview th:nth-child(2),
 .spreadsheetPreview td:nth-child(2) {
-  width: 24%;
+  width: 20%;
 }
 
 .spreadsheetPreview th:nth-child(3),
 .spreadsheetPreview td:nth-child(3) {
-  width: 20%;
+  width: 16%;
 }
 
 .spreadsheetPreview th:nth-child(4),
 .spreadsheetPreview td:nth-child(4) {
-  width: 32%;
+  width: 36%;
 }
 
-.spreadsheetPreview th:nth-child(2) {
-  overflow-wrap: normal;
-  word-break: normal;
+.spreadsheetPreview th:nth-child(1),
+.spreadsheetPreview th:nth-child(4) {
+  hyphens: auto;
 }
+
 .spreadsheetOverlay {
   position: fixed;
   inset: 0;
