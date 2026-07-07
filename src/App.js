@@ -2495,10 +2495,10 @@ const companyContact = findCompanyContact(m.company);
           <table>
             <thead>
               <tr>
-                <th>{language === "de" ? "Liegenschaft" : "Property"}</th>
+                <th>{language === "de" ? "Objekt" : "Property"}</th>
                 <th>{language === "de" ? "Wartung" : "Maintenance"}</th>
-                <th>{t.company}</th>
-                <th>{t.nextDue}</th>
+                <th>{language === "de" ? "Firma" : t.company}</th>
+                <th>{language === "de" ? "Termin" : t.nextDue}</th>
               </tr>
             </thead>
             <tbody>

@@ -664,7 +664,7 @@ body,
 .spreadsheetPreview th,
 .spreadsheetPreview td {
   border-bottom: 1px solid #eee;
-  padding: 8px 6px;
+  padding: 8px 5px;
   text-align: left;
   vertical-align: top;
   overflow-wrap: anywhere;
@@ -676,10 +676,32 @@ body,
   font-weight: 800;
   background: #fff5f5;
   white-space: nowrap;
+  font-size: 10px;
+  line-height: 1.15;
+  padding: 9px 4px;
+}
+
+.spreadsheetPreview th:nth-child(1),
+.spreadsheetPreview td:nth-child(1) {
+  width: 24%;
+}
+
+.spreadsheetPreview th:nth-child(2),
+.spreadsheetPreview td:nth-child(2) {
+  width: 24%;
+}
+
+.spreadsheetPreview th:nth-child(3),
+.spreadsheetPreview td:nth-child(3) {
+  width: 20%;
+}
+
+.spreadsheetPreview th:nth-child(4),
+.spreadsheetPreview td:nth-child(4) {
+  width: 32%;
 }
 
 .spreadsheetPreview th:nth-child(2) {
-  font-size: 9px;
   overflow-wrap: normal;
   word-break: normal;
 }
