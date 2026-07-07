@@ -275,11 +275,13 @@ const maintenanceTypeNamesDe = {
 };
 
 const getMaintenanceTypeName = (type) => {
+  const normalizedType = String(type || "").trim().replace(/\s+/g, " ");
+
   if (language === "de") {
-    return maintenanceTypeNamesDe[type] || type;
+    return maintenanceTypeNamesDe[normalizedType] || normalizedType;
   }
 
-  return type;
+  return normalizedType;
 };
 const normalizeSearchText = (value) => String(value || "").toLowerCase().trim();
 
