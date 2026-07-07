@@ -1111,6 +1111,7 @@ useEffect(() => {
 
   const overdue = filteredItems.filter((m) => m.status === "overdue");
   const dueSoon = filteredItems.filter((m) => m.status === "warning");
+  const futureItems = filteredItems.filter((m) => m.status === "future");
   const allAttentionItems = [...overdue, ...dueSoon].sort((a, b) => a.days - b.days);
   const homeAttentionItems = allAttentionItems.slice(0, 5);
   const maintenancePageItems = filteredItems.filter((m) => {
@@ -2090,28 +2091,28 @@ const companyContact = findCompanyContact(m.company);
     className={maintenanceFilter === "all" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("all")}
   >
-    {t.all}
+    {t.all} ({filteredItems.length})
   </button>
 
   <button
     className={maintenanceFilter === "overdue" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("overdue")}
   >
-    {t.overdue}
+    {t.overdue} ({overdue.length})
   </button>
 
   <button
     className={maintenanceFilter === "dueSoon" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("dueSoon")}
   >
-    {t.dueSoon}
+    {t.dueSoon} ({dueSoon.length})
   </button>
 
   <button
     className={maintenanceFilter === "future" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("future")}
   >
-    {t.future}
+    {t.future} ({futureItems.length})
   </button>
 </div>
 {maintenanceFormOpen && (
@@ -2360,6 +2361,9 @@ const companyContact = findCompanyContact(m.company);
                   + {t.add}
                 </button>
               </div>
+              <p className="muted">
+                {language === "en" ? `Total contacts: ${contacts.length}` : `Kontakte gesamt: ${contacts.length}`}
+              </p>
 
               {contactFormOpen && (
                 <>
