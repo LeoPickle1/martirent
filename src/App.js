@@ -290,6 +290,10 @@ const matchesSearchText = (query, fields) => {
   const haystack = fields.map((field) => normalizeSearchText(field)).join(" ");
   return normalizedQuery.split(/\s+/).every((token) => haystack.includes(token));
 };
+const getPropertyAddress = (name) => {
+  const match = properties.find((p) => p.name === name);
+  return match?.address || "";
+};
   const [offlineNotice, setOfflineNotice] = useState(false);
   const [search, setSearch] = useState("");
   const [showSpreadsheetPreview, setShowSpreadsheetPreview] = useState(false);
@@ -1402,11 +1406,6 @@ const cancelContactForm = () => {
     if (!confirmDelete) return;
 
     setContacts((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const getPropertyAddress = (name) => {
-    const property = properties.find((p) => p.name === name);
-    return property?.address || "";
   };
 
   const getMaintenanceNotes = (item) => {
