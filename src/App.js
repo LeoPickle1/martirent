@@ -2372,7 +2372,13 @@ const companyContact = findCompanyContact(m.company);
                 </button>
               </div>
               <p className="muted">
-                {language === "en" ? `Total contacts: ${contacts.length}` : `Kontakte gesamt: ${contacts.length}`}
+                {search.trim()
+                  ? language === "en"
+                    ? `Matching contacts: ${filteredContacts.length}`
+                    : `Passende Kontakte: ${filteredContacts.length}`
+                  : language === "en"
+                    ? `Total contacts: ${contacts.length}`
+                    : `Kontakte gesamt: ${contacts.length}`}
               </p>
 
               {contactFormOpen && (
