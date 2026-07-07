@@ -1453,20 +1453,31 @@ const cancelContactForm = () => {
     return [...rows, ...propertyCounts];
   };
 
-  const getSpreadsheetNotesRows = () => [
-    ["Liegenschaft", "Adresse", "Original-/Zusatznotizen"],
-    ...properties
+  const getSpreadsheetPropertyNoteRows = () =>
+    properties
       .slice()
       .sort(comparePropertiesByOrder)
-      .map((property) => [
-        property.name,
-        property.address,
+      .flatMap((property) =>
         propertyNotes
           .filter((note) => note.property === property.name)
-          .map((note) => language === "de" ? note.noteDe || note.note : note.note || note.noteDe)
-          .filter(Boolean)
-          .join("\n"),
-      ]),
+          .map((note) => ({
+            property: property.name,
+            address: property.address,
+            unit: note.unit || "",
+            date: note.date || "",
+            note: language === "de" ? note.noteDe || note.note : note.note || note.noteDe || "",
+          }))
+      );
+
+  const getSpreadsheetNotesRows = () => [
+    ["Liegenschaft", "Adresse", "Einheit", "Datum", "Notiz"],
+    ...getSpreadsheetPropertyNoteRows().map((note) => [
+      note.property,
+      note.address,
+      note.unit,
+      note.date,
+      note.note,
+    ]),
   ];
 
   const updateSpreadsheet = () => {
@@ -1491,7 +1502,7 @@ const cancelContactForm = () => {
     XLSX.utils.book_append_sheet(workbook, summarySheet, "Zusammenfassung");
 
     const notesSheet = XLSX.utils.aoa_to_sheet(getSpreadsheetNotesRows());
-    notesSheet["!cols"] = [{ wch: 18 }, { wch: 30 }, { wch: 80 }];
+    notesSheet["!cols"] = [{ wch: 18 }, { wch: 28 }, { wch: 14 }, { wch: 14 }, { wch: 72 }];
     XLSX.utils.book_append_sheet(workbook, notesSheet, "Liegenschaftsnotizen");
 
     XLSX.writeFile(workbook, "MartiRent_Wartungen_Deutsch_mit_Notizen.xlsx");
@@ -2479,26 +2490,46 @@ const companyContact = findCompanyContact(m.company);
       </div>
 
       <div className="spreadsheetPreview">
-        <table>
-          <thead>
-            <tr>
-              <th>{language === "de" ? "Liegenschaft" : "Property"}</th>
-              <th>{language === "de" ? "Wartung" : "Maintenance"}</th>
-              <th>{t.company}</th>
-              <th>{t.nextDue}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {getSpreadsheetMaintenanceRows().map((row, i) => (
-              <tr key={i}>
-                <td>{row.Liegenschaft}</td>
-                <td>{row.Wartung}</td>
-                <td>{row.Firma}</td>
-                <td>{formatDateDisplay(row.nextDueValue)}</td>
+        <div className="spreadsheetPreviewSection">
+          <h4>{language === "de" ? "Wartungsplan" : "Maintenance Plan"}</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>{language === "de" ? "Liegenschaft" : "Property"}</th>
+                <th>{language === "de" ? "Wartung" : "Maintenance"}</th>
+                <th>{t.company}</th>
+                <th>{t.nextDue}</th>
               </tr>
+            </thead>
+            <tbody>
+              {getSpreadsheetMaintenanceRows().map((row, i) => (
+                <tr key={i}>
+                  <td>{row.Liegenschaft}</td>
+                  <td>{row.Wartung}</td>
+                  <td>{row.Firma}</td>
+                  <td>{formatDateDisplay(row.nextDueValue)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="spreadsheetPreviewSection">
+          <h4>{language === "de" ? "Notizen" : "Notes"}</h4>
+          <div className="spreadsheetNotesList">
+            {getSpreadsheetPropertyNoteRows().map((note, i) => (
+              <div className="spreadsheetNoteCard" key={i}>
+                <div className="spreadsheetNoteMeta">
+                  <strong>{note.property}</strong>
+                  {note.unit ? <span>{note.unit}</span> : null}
+                  {note.date ? <span>{formatDateDisplay(note.date)}</span> : null}
+                </div>
+                <p className="spreadsheetNoteAddress">{note.address}</p>
+                <p className="spreadsheetNoteText">{note.note}</p>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
     </div>
   </>

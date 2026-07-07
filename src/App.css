@@ -738,3 +738,56 @@ body,
   box-shadow: none;
   border-radius: 0;
 }
+
+.spreadsheetPreviewSection {
+  padding: 12px;
+  border-bottom: 1px solid #f1dede;
+}
+
+.spreadsheetPreviewSection:last-child {
+  border-bottom: none;
+}
+
+.spreadsheetPreviewSection h4 {
+  margin: 0 0 10px;
+  color: #a80000;
+  font-size: 13px;
+}
+
+.spreadsheetNotesList {
+  display: grid;
+  gap: 10px;
+}
+
+.spreadsheetNoteCard {
+  border: 1px solid #f1dede;
+  border-radius: 12px;
+  padding: 10px;
+  background: #fffaf9;
+}
+
+.spreadsheetNoteMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.spreadsheetNoteMeta span {
+  font-size: 11px;
+  color: #7a7a7a;
+}
+
+.spreadsheetNoteAddress {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: #666;
+}
+
+.spreadsheetNoteText {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
