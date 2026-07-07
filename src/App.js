@@ -281,6 +281,15 @@ const getMaintenanceTypeName = (type) => {
 
   return type;
 };
+const normalizeSearchText = (value) => String(value || "").toLowerCase().trim();
+
+const matchesSearchText = (query, fields) => {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return true;
+
+  const haystack = fields.map((field) => normalizeSearchText(field)).join(" ");
+  return normalizedQuery.split(/\s+/).every((token) => haystack.includes(token));
+};
   const [offlineNotice, setOfflineNotice] = useState(false);
   const [search, setSearch] = useState("");
   const [showSpreadsheetPreview, setShowSpreadsheetPreview] = useState(false);
@@ -1047,31 +1056,58 @@ useEffect(() => {
 // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [maintenance]);
   const filteredItems = items
-  .filter((m) => {
-    const s = search.toLowerCase();
-    return (
-      m.property.toLowerCase().includes(s) ||
-      m.type.toLowerCase().includes(s) ||
-      m.company.toLowerCase().includes(s)
-    );
-  })
+  .filter((m) =>
+    matchesSearchText(search, [
+      m.property,
+      getPropertyAddress(m.property),
+      m.type,
+      getMaintenanceTypeName(m.type),
+      m.company,
+      m.lastDone,
+      m.nextDue,
+      m.notes,
+      m.notesEn,
+      m.notesDe,
+      m.historyText,
+      m.status,
+    ])
+  )
   .sort(compareMaintenanceByPropertyOrder);
   const filteredProperties = properties
   .filter((p) => {
-    const s = search.toLowerCase();
-    return p.name.toLowerCase().includes(s) || p.address.toLowerCase().includes(s);
+    const relatedNotes = propertyNotes
+      .filter((note) => note.property === p.name)
+      .flatMap((note) => [note.unit, note.date, note.note, note.noteDe]);
+    const relatedMaintenance = items
+      .filter((item) => item.property === p.name)
+      .flatMap((item) => [
+        item.type,
+        getMaintenanceTypeName(item.type),
+        item.company,
+        item.notes,
+        item.notesEn,
+        item.notesDe,
+        item.historyText,
+      ]);
+
+    return matchesSearchText(search, [
+      p.name,
+      p.address,
+      ...relatedNotes,
+      ...relatedMaintenance,
+    ]);
   })
   .sort(comparePropertiesByOrder);
 
-  const filteredContacts = contacts.filter((c) => {
-    const s = search.toLowerCase();
-    return (
-      c.company.toLowerCase().includes(s) ||
-      c.phone.toLowerCase().includes(s) ||
-      c.email.toLowerCase().includes(s) ||
-      c.website.toLowerCase().includes(s)
-    );
-  });
+  const filteredContacts = contacts.filter((c) =>
+    matchesSearchText(search, [
+      c.company,
+      c.person,
+      c.phone,
+      c.email,
+      c.website,
+    ])
+  );
 
   const overdue = filteredItems.filter((m) => m.status === "overdue");
   const dueSoon = filteredItems.filter((m) => m.status === "warning");
