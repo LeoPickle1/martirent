@@ -233,6 +233,11 @@ export default function App() {
   "Boiler",
   "Heat Pump Check",
   "Boiler Descaling OG",
+  "Boiler Heat Pump Check",
+  "Heat Pump Service",
+  "Linden Tree Check",
+  "Sewer Pipe",
+  "Tree/Garden",
   "Drain Tile",
   "Floor Heating Flush",
   "Gravity Lines (Sewer)",
@@ -256,6 +261,11 @@ const maintenanceTypeNamesDe = {
   "Gravity Lines (Sewer)": "Abwasserleitungen",
   "Gutter and Downspout": "Dachrinne und Fallrohr",
   "Heat Pump Check": "WÃ¤rmepumpen-Kontrolle",
+  "Heat Pump Service": "WÃ¤rmepumpen-Service",
+  "Boiler Heat Pump Check": "Boiler / WÃ¤rmepumpe prÃ¼fen",
+  "Linden Tree Check": "Lindenbaum-Kontrolle",
+  "Sewer Pipe": "Abwasserleitung",
+  "Tree/Garden": "Baum / Garten",
   "Heating Service": "Heizungsservice",
   "Magnet Separator Cleaning": "Magnetabscheider reinigen",
   "Roof Inspection": "Dachkontrolle",
@@ -719,6 +729,9 @@ dashboard: "Home Page",
     description: "Manage properties, maintenance, and contacts in one place.",
     properties: "Properties",
     maintenance: "Maintenance",
+    all: "All",
+    dueSoon: "Due Soon",
+    future: "Future",
     overdue: "Overdue",
     needsAttention: "Needs Attention",
     backup: "Backup",
@@ -787,6 +800,9 @@ dashboard: "Startseite",
 
     properties: "Immobilien",
     maintenance: "Unterhalt",
+    all: "Alle",
+    dueSoon: "Bald fÃ¤llig",
+    future: "SpÃ¤ter",
     overdue: "ÃœberfÃ¤llig",
     needsAttention: "BenÃ¶tigt Aufmerksamkeit",
     backup: "Sicherung",
@@ -1372,7 +1388,7 @@ const cancelContactForm = () => {
       Adresse: getPropertyAddress(item.property),
       Firma: item.company || "",
       "Zuletzt erledigt": item.lastDone || "",
-      "Nächste Fälligkeit": item.nextDue || "",
+      "NÃ¤chste FÃ¤lligkeit": item.nextDue || "",
       nextDueValue: item.nextDue || "",
       "Intervall (Jahre)": Number(item.intervalYears || 0) || "",
       Bemerkungen: getMaintenanceNotes(item),
@@ -1381,10 +1397,10 @@ const cancelContactForm = () => {
     const rows = [
       ["Kennzahl", "Wert", "", "Liegenschaft", "Anzahl Wartungen"],
       ["Total Wartungen", items.length, "", "", ""],
-      ["Überfällig", items.filter((item) => item.status === "overdue").length, "", "", ""],
-      ["Nicht überfällig", items.filter((item) => item.status !== "overdue").length, "", "", ""],
-      ["Nächste 30 Tage", items.filter((item) => item.days >= 0 && item.days <= 30).length, "", "", ""],
-      ["Nächste 365 Tage", items.filter((item) => item.days >= 0 && item.days <= 365).length, "", "", ""],
+      ["ï¿½berfï¿½llig", items.filter((item) => item.status === "overdue").length, "", "", ""],
+      ["Nicht ï¿½berfï¿½llig", items.filter((item) => item.status !== "overdue").length, "", "", ""],
+      ["Nï¿½chste 30 Tage", items.filter((item) => item.days >= 0 && item.days <= 30).length, "", "", ""],
+      ["Nï¿½chste 365 Tage", items.filter((item) => item.days >= 0 && item.days <= 365).length, "", "", ""],
     ];
 
     const propertyCounts = properties
@@ -2038,28 +2054,28 @@ const companyContact = findCompanyContact(m.company);
     className={maintenanceFilter === "all" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("all")}
   >
-    All
+    {t.all}
   </button>
 
   <button
     className={maintenanceFilter === "overdue" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("overdue")}
   >
-    Overdue
+    {t.overdue}
   </button>
 
   <button
     className={maintenanceFilter === "dueSoon" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("dueSoon")}
   >
-    Due Soon
+    {t.dueSoon}
   </button>
 
   <button
     className={maintenanceFilter === "future" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("future")}
   >
-    Future
+    {t.future}
   </button>
 </div>
 {maintenanceFormOpen && (
