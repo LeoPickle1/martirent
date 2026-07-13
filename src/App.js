@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
 import "./App.css";
@@ -297,6 +297,7 @@ const getPropertyAddress = (name) => {
   return match?.address || "";
 };
   const [offlineNotice, setOfflineNotice] = useState(false);
+  const [isOffline, setIsOffline] = useState(() => !navigator.onLine);
   const [search, setSearch] = useState("");
   const [showSpreadsheetPreview, setShowSpreadsheetPreview] = useState(false);
   const [maintenanceFilter, setMaintenanceFilter] = useState("all");
@@ -337,6 +338,7 @@ const [contactForm, setContactForm] = useState({
   const [language, setLanguage] = useState("en");
 const [hasLoadedBackend, setHasLoadedBackend] = useState(false);
 const [hasLoadedPropertiesBackend, setHasLoadedPropertiesBackend] = useState(false);
+  const offlineNoticeTimeoutRef = useRef(null);
 
   const [properties, setProperties] = useState(() => {
     const saved = localStorage.getItem("properties");
@@ -471,9 +473,42 @@ const propertyNotes = [
   },
 ];
 
-  useEffect(() => localStorage.setItem("properties", JSON.stringify(properties)), [properties]);
-  useEffect(() => localStorage.setItem("maintenanceAlerts", JSON.stringify(maintenance)), [maintenance]);
+  const showOfflineNoticeForFiveSeconds = () => {
+    if (offlineNoticeTimeoutRef.current) {
+      clearTimeout(offlineNoticeTimeoutRef.current);
+    }
+
+    setOfflineNotice(true);
+    offlineNoticeTimeoutRef.current = setTimeout(() => {
+      setOfflineNotice(false);
+      offlineNoticeTimeoutRef.current = null;
+    }, 5000);
+  };
+
+  const stopIfOffline = () => {
+    if (!isOffline) return false;
+    showOfflineNoticeForFiveSeconds();
+    return true;
+  };
+
+  useEffect(() => {
+    if (!isOffline) {
+      localStorage.setItem("properties", JSON.stringify(properties));
+    }
+  }, [properties, isOffline]);
+
+  useEffect(() => {
+    if (!isOffline) {
+      localStorage.setItem("maintenanceAlerts", JSON.stringify(maintenance));
+    }
+  }, [maintenance, isOffline]);
+
 useEffect(() => {
+  if (isOffline) {
+    setHasLoadedBackend(true);
+    return;
+  }
+
   fetch("https://martirent-backend-production.up.railway.app/maintenance")
     .then((res) => res.json())
     .then((data) => {
@@ -490,10 +525,14 @@ useEffect(() => {
       console.error("Backend load failed:", error);
       setHasLoadedBackend(true);
     });
-}, []);
+}, [isOffline]);
 
 
 useEffect(() => {
+  if (isOffline) {
+    return undefined;
+  }
+
   const loadContactsFromBackend = () => {
     fetch("https://martirent-backend-production.up.railway.app/contacts")
       .then((res) => res.json())
@@ -515,9 +554,14 @@ useEffect(() => {
   const interval = setInterval(loadContactsFromBackend, 10000);
 
   return () => clearInterval(interval);
-}, []);
+}, [isOffline]);
 
 useEffect(() => {
+  if (isOffline) {
+    setHasLoadedPropertiesBackend(true);
+    return undefined;
+  }
+
   const loadPropertiesFromBackend = () => {
     fetch("https://martirent-backend-production.up.railway.app/properties")
       .then((res) => res.json())
@@ -542,9 +586,9 @@ useEffect(() => {
   const interval = setInterval(loadPropertiesFromBackend, 10000);
 
   return () => clearInterval(interval);
-}, []);
+}, [isOffline]);
 useEffect(() => {
-  if (!hasLoadedBackend) return;
+  if (!hasLoadedBackend || isOffline) return;
 
   // Do not let an empty phone/app wipe the database
   if (!Array.isArray(maintenance) || maintenance.length === 0) {
@@ -561,10 +605,10 @@ useEffect(() => {
   }).catch((error) => {
     console.error("Backend sync failed:", error);
   });
-}, [maintenance, hasLoadedBackend]);
+}, [maintenance, hasLoadedBackend, isOffline]);
 
 useEffect(() => {
-  if (!hasLoadedBackend) return;
+  if (!hasLoadedBackend || isOffline) return;
 
   if (!Array.isArray(contacts) || contacts.length === 0) {
     console.log("Skipped contacts sync because contacts is empty");
@@ -580,10 +624,10 @@ useEffect(() => {
   }).catch((error) => {
     console.error("Contacts backend sync failed:", error);
   });
-}, [contacts, hasLoadedBackend]);
+}, [contacts, hasLoadedBackend, isOffline]);
 
 useEffect(() => {
-  if (!hasLoadedPropertiesBackend) return;
+  if (!hasLoadedPropertiesBackend || isOffline) return;
 
   if (!Array.isArray(properties) || properties.length === 0) {
     console.log("Skipped properties sync because properties is empty");
@@ -599,8 +643,12 @@ useEffect(() => {
   }).catch((error) => {
     console.error("Properties backend sync failed:", error);
   });
-}, [properties, hasLoadedPropertiesBackend]);
-  useEffect(() => localStorage.setItem("documents", JSON.stringify(documents)), [documents]);
+}, [properties, hasLoadedPropertiesBackend, isOffline]);
+  useEffect(() => {
+  if (!isOffline) {
+    localStorage.setItem("documents", JSON.stringify(documents));
+  }
+}, [documents, isOffline]);
   useEffect(() => {
   if (!hasLoadedBackend) return;
 
@@ -618,55 +666,38 @@ useEffect(() => {
     })
   );
 }, [hasLoadedBackend]);
-  useEffect(() => localStorage.setItem("contacts", JSON.stringify(contacts)), [contacts]);
+  useEffect(() => {
+  if (!isOffline) {
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+  }
+}, [contacts, isOffline]);
   
 
  useEffect(() => {
   if (!navigator.onLine) {
-    setOfflineNotice(true);
-
-    setTimeout(() => {
-      setOfflineNotice(false);
-    }, 2000);
+    showOfflineNoticeForFiveSeconds();
   }
 
   const handleOffline = () => {
-    setOfflineNotice(true);
+    setIsOffline(true);
+    showOfflineNoticeForFiveSeconds();
+  };
 
-    setTimeout(() => {
-      setOfflineNotice(false);
-    }, 2000);
+  const handleOnline = () => {
+    setIsOffline(false);
   };
 
   window.addEventListener("offline", handleOffline);
+  window.addEventListener("online", handleOnline);
 
   return () => {
+    if (offlineNoticeTimeoutRef.current) {
+      clearTimeout(offlineNoticeTimeoutRef.current);
+    }
     window.removeEventListener("offline", handleOffline);
+    window.removeEventListener("online", handleOnline);
   };
-}, []);
-useEffect(() => {
-  if (!navigator.onLine) {
-    setOfflineNotice(true);
-
-    setTimeout(() => {
-      setOfflineNotice(false);
-    }, 2000);
-  }
-
-  const handleOffline = () => {
-    setOfflineNotice(true);
-
-    setTimeout(() => {
-      setOfflineNotice(false);
-    }, 2000);
-  };
-
-  window.addEventListener("offline", handleOffline);
-
-  return () => {
-    window.removeEventListener("offline", handleOffline);
-  };
-}, []);
+}, [isOffline]);
   useEffect(() => {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -1165,6 +1196,7 @@ useEffect(() => {
   setPropertyFormOpen(true);
 };
 const savePropertyForm = () => {
+  if (stopIfOffline()) return;
   if (!propertyForm.name || !propertyForm.address) return;
 
   if (editingPropertyIndex === null) {
@@ -1192,6 +1224,7 @@ const cancelPropertyForm = () => {
   });
 };
   const deleteProperty = (index) => {
+  if (stopIfOffline()) return;
   const confirmDelete = window.confirm(t.deletePropertyConfirm);
   if (!confirmDelete) return;
 
@@ -1239,6 +1272,7 @@ setMaintenanceForm({
   setMaintenanceFormOpen(true);
 };
 const saveMaintenanceForm = () => {
+  if (stopIfOffline()) return;
   if (
     !maintenanceForm.property ||
     !maintenanceForm.type ||
@@ -1314,6 +1348,7 @@ notesDe: "",
 });
 };
 const completeMaintenance = (index) => {
+  if (stopIfOffline()) return;
   const confirmComplete = window.confirm(t.completeMaintenanceConfirm);
   if (!confirmComplete) return;
 
@@ -1338,6 +1373,7 @@ const completeMaintenance = (index) => {
   }, 3000);
 };
 const deleteMaintenance = (index) => {
+  if (stopIfOffline()) return;
   const confirmDelete = window.confirm(t.deleteMaintenanceConfirm);
   if (!confirmDelete) return;
 
@@ -1373,6 +1409,7 @@ const deleteMaintenance = (index) => {
   setContactFormOpen(true);
 };
 const saveContactForm = () => {
+  if (stopIfOffline()) return;
   if (!contactForm.company) return;
 
   if (editingContactIndex === null) {
@@ -1404,6 +1441,7 @@ const cancelContactForm = () => {
   });
 };
   const deleteContact = (index) => {
+    if (stopIfOffline()) return;
     const confirmDelete = window.confirm(t.deleteContactConfirm);
     if (!confirmDelete) return;
 
@@ -1538,6 +1576,11 @@ const cancelContactForm = () => {
   };
 
   const importBackup = (event) => {
+    if (stopIfOffline()) {
+      event.target.value = "";
+      return;
+    }
+
     const file = event.target.files[0];
     if (!file) return;
 
@@ -1745,7 +1788,9 @@ const companyContact = findCompanyContact(m.company);
           )}
 {offlineNotice && (
   <div className="offlineNotice">
-    {language === "en" ? "You are offline" : "Du bist offline"}
+    {language === "en"
+      ? "YOU'RE OFFLINE - changes will not save"
+      : "DU BIST OFFLINE - Aenderungen werden nicht gespeichert"}
   </div>
 )}
           {tab === "home" && (
