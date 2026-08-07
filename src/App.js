@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
 import "./App.css";
+import maintenanceFallback from "./maintenanceFallback.json";
 import { importedContacts } from "./contactsData";
 const maintenanceExtraNotes = {
   "Sempach|SiNa Inspection": {
@@ -356,7 +357,7 @@ const [hasLoadedPropertiesBackend, setHasLoadedPropertiesBackend] = useState(fal
 
   const [maintenance, setMaintenance] = useState(() => {
     const saved = localStorage.getItem("maintenanceAlerts");
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : maintenanceFallback;
   });
 
   const [documents, setDocuments] = useState(() => {
@@ -505,26 +506,34 @@ const propertyNotes = [
 
 useEffect(() => {
   if (isOffline) {
-    setHasLoadedBackend(true);
-    return;
+    return undefined;
   }
 
-  fetch("https://martirent-backend-production.up.railway.app/maintenance")
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Loaded maintenance from backend:", data);
+  const loadMaintenanceFromBackend = () => {
+    fetch("https://martirent-backend-production.up.railway.app/maintenance")
+      .then((res) => {
+        if (!res.ok) throw new Error(`Maintenance backend returned ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Loaded maintenance from backend:", data);
 
-      if (Array.isArray(data) && data.length > 0) {
-        setMaintenance(data);
-        localStorage.setItem("maintenanceAlerts", JSON.stringify(data));
-      }
+        if (Array.isArray(data) && data.length > 0) {
+          setMaintenance(data);
+          localStorage.setItem("maintenanceAlerts", JSON.stringify(data));
+        }
 
-      setHasLoadedBackend(true);
-    })
-    .catch((error) => {
-      console.error("Backend load failed:", error);
-      setHasLoadedBackend(true);
-    });
+        setHasLoadedBackend(true);
+      })
+      .catch((error) => {
+        console.error("Backend load failed; using saved maintenance:", error);
+      });
+  };
+
+  loadMaintenanceFromBackend();
+  const interval = setInterval(loadMaintenanceFromBackend, 10000);
+
+  return () => clearInterval(interval);
 }, [isOffline]);
 
 
