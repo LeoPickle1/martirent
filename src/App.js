@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import "./App.css";
 import maintenanceFallback from "./maintenanceFallback.json";
 import { importedContacts } from "./contactsData";
+const DATA_API = "/api/data";
 const maintenanceExtraNotes = {
   "Sempach|SiNa Inspection": {
     de: "SiNa: Periodische Kontrolle am 10.10.2024 durch Elektro-Team Eich. SiNa Bericht pendent.",
@@ -338,8 +339,12 @@ const [contactForm, setContactForm] = useState({
   const [showHeader, setShowHeader] = useState(true);
   const [language, setLanguage] = useState("en");
 const [hasLoadedBackend, setHasLoadedBackend] = useState(false);
+const [hasLoadedContactsBackend, setHasLoadedContactsBackend] = useState(false);
 const [hasLoadedPropertiesBackend, setHasLoadedPropertiesBackend] = useState(false);
   const offlineNoticeTimeoutRef = useRef(null);
+  const lastSyncedMaintenanceRef = useRef("");
+  const lastSyncedContactsRef = useRef("");
+  const lastSyncedPropertiesRef = useRef("");
 
   const [properties, setProperties] = useState(() => {
     const saved = localStorage.getItem("properties");
@@ -510,7 +515,7 @@ useEffect(() => {
   }
 
   const loadMaintenanceFromBackend = () => {
-    fetch("https://martirent-backend-production.up.railway.app/maintenance")
+    fetch(`${DATA_API}?type=maintenance`, { cache: "no-store" })
       .then((res) => {
         if (!res.ok) throw new Error(`Maintenance backend returned ${res.status}`);
         return res.json();
@@ -518,9 +523,16 @@ useEffect(() => {
       .then((data) => {
         console.log("Loaded maintenance from backend:", data);
 
-        if (Array.isArray(data) && data.length > 0) {
-          setMaintenance(data);
-          localStorage.setItem("maintenanceAlerts", JSON.stringify(data));
+        if (Array.isArray(data)) {
+          const serialized = JSON.stringify(data);
+          lastSyncedMaintenanceRef.current = serialized;
+
+          if (data.length > 0) {
+            setMaintenance((current) =>
+              JSON.stringify(current) === serialized ? current : data
+            );
+            localStorage.setItem("maintenanceAlerts", serialized);
+          }
         }
 
         setHasLoadedBackend(true);
@@ -543,15 +555,27 @@ useEffect(() => {
   }
 
   const loadContactsFromBackend = () => {
-    fetch("https://martirent-backend-production.up.railway.app/contacts")
-      .then((res) => res.json())
+    fetch(`${DATA_API}?type=contacts`, { cache: "no-store" })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Contacts backend returned ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         console.log("Loaded contacts from backend:", data);
 
-        if (Array.isArray(data) && data.length > 0) {
-          setContacts(data);
-          localStorage.setItem("savedContacts", JSON.stringify(data));
+        if (Array.isArray(data)) {
+          const serialized = JSON.stringify(data);
+          lastSyncedContactsRef.current = serialized;
+
+          if (data.length > 0) {
+            setContacts((current) =>
+              JSON.stringify(current) === serialized ? current : data
+            );
+            localStorage.setItem("contacts", serialized);
+          }
         }
+
+        setHasLoadedContactsBackend(true);
       })
       .catch((error) => {
         console.error("Contacts backend load failed:", error);
@@ -572,14 +596,24 @@ useEffect(() => {
   }
 
   const loadPropertiesFromBackend = () => {
-    fetch("https://martirent-backend-production.up.railway.app/properties")
-      .then((res) => res.json())
+    fetch(`${DATA_API}?type=properties`, { cache: "no-store" })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Properties backend returned ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         console.log("Loaded properties from backend:", data);
 
-        if (Array.isArray(data) && data.length > 0) {
-          setProperties(data);
-          localStorage.setItem("properties", JSON.stringify(data));
+        if (Array.isArray(data)) {
+          const serialized = JSON.stringify(data);
+          lastSyncedPropertiesRef.current = serialized;
+
+          if (data.length > 0) {
+            setProperties((current) =>
+              JSON.stringify(current) === serialized ? current : data
+            );
+            localStorage.setItem("properties", serialized);
+          }
         }
 
         setHasLoadedPropertiesBackend(true);
@@ -605,35 +639,51 @@ useEffect(() => {
     return;
   }
 
-  fetch("https://martirent-backend-production.up.railway.app/maintenance", {
+  const serialized = JSON.stringify(maintenance);
+  if (serialized === lastSyncedMaintenanceRef.current) return;
+
+  fetch(`${DATA_API}?type=maintenance`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(maintenance),
-  }).catch((error) => {
-    console.error("Backend sync failed:", error);
-  });
+    body: serialized,
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error(`Maintenance sync returned ${res.status}`);
+      lastSyncedMaintenanceRef.current = serialized;
+    })
+    .catch((error) => {
+      console.error("Backend sync failed:", error);
+    });
 }, [maintenance, hasLoadedBackend, isOffline]);
 
 useEffect(() => {
-  if (!hasLoadedBackend || isOffline) return;
+  if (!hasLoadedContactsBackend || isOffline) return;
 
   if (!Array.isArray(contacts) || contacts.length === 0) {
     console.log("Skipped contacts sync because contacts is empty");
     return;
   }
 
-  fetch("https://martirent-backend-production.up.railway.app/contacts", {
+  const serialized = JSON.stringify(contacts);
+  if (serialized === lastSyncedContactsRef.current) return;
+
+  fetch(`${DATA_API}?type=contacts`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(contacts),
-  }).catch((error) => {
-    console.error("Contacts backend sync failed:", error);
-  });
-}, [contacts, hasLoadedBackend, isOffline]);
+    body: serialized,
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error(`Contacts sync returned ${res.status}`);
+      lastSyncedContactsRef.current = serialized;
+    })
+    .catch((error) => {
+      console.error("Contacts backend sync failed:", error);
+    });
+}, [contacts, hasLoadedContactsBackend, isOffline]);
 
 useEffect(() => {
   if (!hasLoadedPropertiesBackend || isOffline) return;
@@ -643,15 +693,23 @@ useEffect(() => {
     return;
   }
 
-  fetch("https://martirent-backend-production.up.railway.app/properties", {
+  const serialized = JSON.stringify(properties);
+  if (serialized === lastSyncedPropertiesRef.current) return;
+
+  fetch(`${DATA_API}?type=properties`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(properties),
-  }).catch((error) => {
-    console.error("Properties backend sync failed:", error);
-  });
+    body: serialized,
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error(`Properties sync returned ${res.status}`);
+      lastSyncedPropertiesRef.current = serialized;
+    })
+    .catch((error) => {
+      console.error("Properties backend sync failed:", error);
+    });
 }, [properties, hasLoadedPropertiesBackend, isOffline]);
   useEffect(() => {
   if (!isOffline) {
