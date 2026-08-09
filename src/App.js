@@ -1,10 +1,42 @@
 import React, { useState, useEffect, useRef } from "react";
-import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
 import "./App.css";
 import maintenanceFallback from "./maintenanceFallback.json";
 import { importedContacts } from "./contactsData";
 const DATA_API = "/api/data";
+
+const isRecord = (value) =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const isPropertyRecord = (value) =>
+  isRecord(value) && typeof value.name === "string";
+
+const isMaintenanceRecord = (value) =>
+  isRecord(value) &&
+  typeof value.property === "string" &&
+  typeof value.type === "string" &&
+  typeof value.company === "string";
+
+const readStoredArray = (key, fallback, isValid = isRecord) => {
+  try {
+    const saved = localStorage.getItem(key);
+    if (!saved) return fallback;
+
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return fallback;
+
+    const validItems = parsed.filter(isValid);
+    return validItems.length === parsed.length ? validItems : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const toLocalDateString = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+
 const maintenanceExtraNotes = {
   "Sempach|SiNa Inspection": {
     de: "SiNa: Periodische Kontrolle am 10.10.2024 durch Elektro-Team Eich. SiNa Bericht pendent.",
@@ -312,7 +344,6 @@ const [maintenanceForm, setMaintenanceForm] = useState({
   lastDone: "",
   intervalYears: "",
   warningDays: "",
-  sendEmail: false,
   notesEn: "",
   notesDe: "",
   historyText: "",
@@ -347,8 +378,7 @@ const [hasLoadedPropertiesBackend, setHasLoadedPropertiesBackend] = useState(fal
   const lastSyncedPropertiesRef = useRef("");
 
   const [properties, setProperties] = useState(() => {
-    const saved = localStorage.getItem("properties");
-    return saved ? JSON.parse(saved) : [
+    return readStoredArray("properties", [
       { name: "Sempach", address: "Feldmatt 22" },
       { name: "Langnau", address: "Lenggenweg 12" },
       { name: "Hilterfingen", address: "Hüneggweg 15" },
@@ -357,17 +387,19 @@ const [hasLoadedPropertiesBackend, setHasLoadedPropertiesBackend] = useState(fal
       { name: "Kundmatt", address: "Kundmatt 685" },
       { name: "Grenchen", address: "Allmendstrasse 5" },
       { name: "Eich", address: "Eggweid 3" },
-    ];
+    ], isPropertyRecord);
   });
 
   const [maintenance, setMaintenance] = useState(() => {
-    const saved = localStorage.getItem("maintenanceAlerts");
-    return saved ? JSON.parse(saved) : maintenanceFallback;
+    return readStoredArray(
+      "maintenanceAlerts",
+      maintenanceFallback,
+      isMaintenanceRecord
+    );
   });
 
   const [documents, setDocuments] = useState(() => {
-    const saved = localStorage.getItem("documents");
-    return saved ? JSON.parse(saved) : [
+    return readStoredArray("documents", [
       { name: "Alpha Control", type: "SiNa / Electrical Inspection" },
       { name: "MegaOhm", type: "Electrical Inspection" },
       { name: "Frutiger-Zbinden", type: "Heating / Floor Heating" },
@@ -375,12 +407,11 @@ const [hasLoadedPropertiesBackend, setHasLoadedPropertiesBackend] = useState(fal
       { name: "Jomos", type: "Fire Extinguisher" },
       { name: "Primus", type: "Fire Extinguisher" },
       { name: "Felix Weber", type: "Chimney Sweep" },
-    ];
+    ]);
   });
 
   const [contacts, setContacts] = useState(() => {
-  const saved = localStorage.getItem("contacts");
-  const savedContacts = saved ? JSON.parse(saved) : [];
+  const savedContacts = readStoredArray("contacts", []);
 
   const allContacts = [...savedContacts, ...importedContacts];
   const seen = new Set();
@@ -498,6 +529,10 @@ const propertyNotes = [
   };
 
   useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  useEffect(() => {
     if (!isOffline) {
       localStorage.setItem("properties", JSON.stringify(properties));
     }
@@ -521,15 +556,14 @@ useEffect(() => {
         return res.json();
       })
       .then((data) => {
-        console.log("Loaded maintenance from backend:", data);
-
         if (Array.isArray(data)) {
-          const serialized = JSON.stringify(data);
+          const validData = data.filter(isMaintenanceRecord);
+          const serialized = JSON.stringify(validData);
           lastSyncedMaintenanceRef.current = serialized;
 
-          if (data.length > 0) {
+          if (validData.length > 0) {
             setMaintenance((current) =>
-              JSON.stringify(current) === serialized ? current : data
+              JSON.stringify(current) === serialized ? current : validData
             );
             localStorage.setItem("maintenanceAlerts", serialized);
           }
@@ -561,15 +595,14 @@ useEffect(() => {
         return res.json();
       })
       .then((data) => {
-        console.log("Loaded contacts from backend:", data);
-
         if (Array.isArray(data)) {
-          const serialized = JSON.stringify(data);
+          const validData = data.filter(isRecord);
+          const serialized = JSON.stringify(validData);
           lastSyncedContactsRef.current = serialized;
 
-          if (data.length > 0) {
+          if (validData.length > 0) {
             setContacts((current) =>
-              JSON.stringify(current) === serialized ? current : data
+              JSON.stringify(current) === serialized ? current : validData
             );
             localStorage.setItem("contacts", serialized);
           }
@@ -602,15 +635,14 @@ useEffect(() => {
         return res.json();
       })
       .then((data) => {
-        console.log("Loaded properties from backend:", data);
-
         if (Array.isArray(data)) {
-          const serialized = JSON.stringify(data);
+          const validData = data.filter(isPropertyRecord);
+          const serialized = JSON.stringify(validData);
           lastSyncedPropertiesRef.current = serialized;
 
-          if (data.length > 0) {
+          if (validData.length > 0) {
             setProperties((current) =>
-              JSON.stringify(current) === serialized ? current : data
+              JSON.stringify(current) === serialized ? current : validData
             );
             localStorage.setItem("properties", serialized);
           }
@@ -635,7 +667,6 @@ useEffect(() => {
 
   // Do not let an empty phone/app wipe the database
   if (!Array.isArray(maintenance) || maintenance.length === 0) {
-    console.log("Skipped backend sync because maintenance is empty");
     return;
   }
 
@@ -662,7 +693,6 @@ useEffect(() => {
   if (!hasLoadedContactsBackend || isOffline) return;
 
   if (!Array.isArray(contacts) || contacts.length === 0) {
-    console.log("Skipped contacts sync because contacts is empty");
     return;
   }
 
@@ -689,7 +719,6 @@ useEffect(() => {
   if (!hasLoadedPropertiesBackend || isOffline) return;
 
   if (!Array.isArray(properties) || properties.length === 0) {
-    console.log("Skipped properties sync because properties is empty");
     return;
   }
 
@@ -837,10 +866,11 @@ deleteDocumentConfirm: "Are you sure you want to delete this document?",
 deleteContactConfirm: "Are you sure you want to delete this contact?",
 completeMaintenanceConfirm: "Mark this maintenance as complete? This will update the Last Done date to today.",
     appSubtitle: "Swiss Property Manager",
-dashboard: "Home Page",
+    dashboard: "Home",
     welcome: "Welcome to MartiRent",
     description: "Manage properties, maintenance, and contacts in one place.",
     properties: "Properties",
+    property: "Property",
     maintenance: "Maintenance",
     all: "All",
     dueSoon: "Due Soon",
@@ -857,6 +887,7 @@ dashboard: "Home Page",
     switchLanguage: "Deutsch",
     calendar: "Calendar",
 contacts: "Contacts",
+contact: "Contact",
 home: "Home",
 props: "Properties",
 maint: "Maintenance",
@@ -886,7 +917,11 @@ everythingGood: "Everything looks good.",
 searchResults: "Search Results",
 noPropertiesFound: "No properties found.",
 noMaintenanceFound: "No maintenance found.",
-noContactsFound: "No contacts found.",
+  noContactsFound: "No contacts found.",
+  maintenanceCompleted: "Maintenance marked complete",
+  backupDownloaded: "Backup downloaded",
+  backupRestored: "Backup restored",
+  invalidBackup: "Invalid backup",
   },
   de: {
     propertyNameQuestion: "Name der Immobilie?",
@@ -909,9 +944,10 @@ completeMaintenanceConfirm: "Diesen Unterhalt als erledigt markieren? Das Datum 
 appSubtitle: "Schweizer Immobilienverwaltung",   
 dashboard: "Startseite",
     welcome: "Willkommen bei MartiRent",
-    description: "Verwalte Immobilien, Unterhalt, Kontakte und Dokumente an einem Ort.",
+    description: "Verwalte Immobilien, Unterhalt und Kontakte an einem Ort.",
 
     properties: "Immobilien",
+    property: "Immobilie",
     maintenance: "Unterhalt",
     all: "Alle",
     dueSoon: "Bald fällig",
@@ -928,6 +964,7 @@ dashboard: "Startseite",
     switchLanguage: "English",
     calendar: "Kalender",
 contacts: "Kontakte",
+contact: "Kontakt",
 home: "Start",
 props: "Immobilien",
 maint: "Unterhalt",
@@ -957,7 +994,11 @@ everythingGood: "Alles sieht gut aus.",
 searchResults: "Suchergebnisse",
 noPropertiesFound: "Keine Immobilien gefunden.",
 noMaintenanceFound: "Kein Unterhalt gefunden.",
-noContactsFound: "Keine Kontakte gefunden.",
+  noContactsFound: "Keine Kontakte gefunden.",
+  maintenanceCompleted: "Unterhalt als erledigt markiert",
+  backupDownloaded: "Sicherung heruntergeladen",
+  backupRestored: "Sicherung wiederhergestellt",
+  invalidBackup: "Ungültige Sicherung",
   },
 };
 
@@ -1024,30 +1065,67 @@ const formatDateDisplay = (dateString) => {
     .replace(/ /g, "-");
 };
   const addYears = (date, years) => {
-  const d = new Date(date + "T00:00:00");
+    const parsedDate = new Date(`${date}T00:00:00`);
+    const interval = Number(years);
 
-  const interval = Number(years);
-  if (Number.isNaN(interval)) return date;
+    if (Number.isNaN(parsedDate.getTime()) || !Number.isFinite(interval)) {
+      return "";
+    }
 
-  const monthsToAdd = Math.round(interval * 12);
-
-  d.setMonth(d.getMonth() + monthsToAdd);
-
-  return d.toISOString().split("T")[0];
-};
+    parsedDate.setMonth(parsedDate.getMonth() + Math.round(interval * 12));
+    return toLocalDateString(parsedDate);
+  };
 
   const daysUntil = (date) => {
+    const [targetYear, targetMonth, targetDay] = String(date)
+      .split("-")
+      .map(Number);
+
+    if (![targetYear, targetMonth, targetDay].every(Number.isFinite)) {
+      return Number.NaN;
+    }
+
     const today = new Date();
-    const target = new Date(date);
-    today.setHours(0, 0, 0, 0);
-    target.setHours(0, 0, 0, 0);
-    return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+    const todayUtc = Date.UTC(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const targetUtc = Date.UTC(targetYear, targetMonth - 1, targetDay);
+
+    return Math.round((targetUtc - todayUtc) / (1000 * 60 * 60 * 24));
+  };
+
+  const formatMaintenanceStatus = (days) => {
+    if (!Number.isFinite(days)) return "-";
+
+    if (language === "de") {
+      if (days < 0) {
+        const overdueDays = Math.abs(days);
+        return `seit ${overdueDays} ${overdueDays === 1 ? "Tag" : "Tagen"} überfällig`;
+      }
+
+      if (days === 0) return "heute fällig";
+      return `noch ${days} ${days === 1 ? "Tag" : "Tage"}`;
+    }
+
+    if (days < 0) {
+      const overdueDays = Math.abs(days);
+      return `${overdueDays} ${overdueDays === 1 ? "day" : "days"} overdue`;
+    }
+
+    if (days === 0) return "due today";
+    return `due in ${days} ${days === 1 ? "day" : "days"}`;
   };
 
   const items = maintenance
   .filter((m) => m.lastDone || m.nextDue)
   .map((m) => {
-    const nextDue = m.nextDue || addYears(m.lastDone, m.intervalYears);
+    const calculatedNextDue =
+      m.lastDone && m.intervalYears !== ""
+        ? addYears(m.lastDone, m.intervalYears)
+        : "";
+    const nextDue = calculatedNextDue || m.nextDue;
     const days = daysUntil(nextDue);
     const warningDays = Number(m.warningDays || 30);
 
@@ -1063,7 +1141,8 @@ const formatDateDisplay = (dateString) => {
           ? "warning"
           : "future",
     };
-  });
+  })
+  .filter((m) => m.nextDue && Number.isFinite(m.days));
   const findCompanyContact = (companyName) => {
   if (!companyName) return null;
 
@@ -1078,87 +1157,6 @@ const formatDateDisplay = (dateString) => {
     );
   });
 };
-  const findCompanyEmail = (companyName) => {
-  if (!companyName) return "";
-
-  const companyNameLower = companyName.toLowerCase();
-
-  const match = contacts.find((contact) => {
-    const contactCompany = (contact.company || "").toLowerCase();
-
-    return (
-      contactCompany.includes(companyNameLower) ||
-      companyNameLower.includes(contactCompany)
-    );
-  });
-
-  if (!match || !match.email) return "";
-
-  return match.email.split(" / ")[0];
-};
-const sendReminderEmail = async (
-  toEmail,
-  property,
-  maintenance,
-  company,
-  dueDate,
-  daysRemaining
-) => {
-  try {
-    await emailjs.send(
-      "service_se557qo",
-      "template_ewxeb9s",
-      {
-        to_email: toEmail,
-        property,
-        maintenance,
-        company,
-        due_date: dueDate,
-        days_remaining: daysRemaining,
-      },
-      "OjiM96plxa6axVPRc"
-    );
-
-    console.log("Email sent");
-  } catch (error) {
-    console.error("Email failed", error);
-  }
-};
-
-useEffect(() => {
-  const reminderDays = [365, 30, 7];
-
-  items.forEach((item) => {
-  if (!item.sendEmail) return;
-  if (!reminderDays.includes(item.days)) return;
-
-  const companyEmail = findCompanyEmail(item.company);
-  if (!companyEmail) return;
-
-    const emailId = `${item.property}-${item.type}-${item.nextDue}-${item.days}`;
-
-    const sentEmails = JSON.parse(
-      localStorage.getItem("sentReminderEmails") || "[]"
-    );
-
-    if (sentEmails.includes(emailId)) return;
-
-    sendReminderEmail(
-  companyEmail,
-  item.property,
-  item.type,
-  item.company,
-  item.nextDue,
-  item.days
-);
-
-    localStorage.setItem(
-      "sentReminderEmails",
-      JSON.stringify([...sentEmails, emailId])
-    );
-  });
-// eslint-disable-next-line react-hooks/exhaustive-deps
-}, [maintenance]);
   const filteredItems = items
   .filter((m) =>
     matchesSearchText(search, [
@@ -1311,7 +1309,6 @@ const addMaintenance = () => {
     notesEn: "",
     notesDe: "",
     historyText: "",
-    sendEmail: false,
   });
 
   setMaintenanceFormOpen(true);
@@ -1331,7 +1328,6 @@ setMaintenanceForm({
   lastDone: current.lastDone || "",
   intervalYears: current.intervalYears || "",
   warningDays: current.warningDays || "",
-  sendEmail: current.sendEmail || false,
   notesEn: current.notesEn || "",
   notesDe: current.notesDe || current.notes || "",
   historyText: historyDates.join("\n"),
@@ -1363,7 +1359,7 @@ const savedMaintenance = {
   lastDone: maintenanceForm.lastDone,
   intervalYears: maintenanceForm.intervalYears,
   warningDays: maintenanceForm.warningDays,
-  sendEmail: maintenanceForm.sendEmail,
+  nextDue: addYears(maintenanceForm.lastDone, maintenanceForm.intervalYears),
   notesEn: maintenanceForm.notesEn,
   notesDe: maintenanceForm.notesDe,
   history,
@@ -1391,7 +1387,6 @@ if (editingMaintenanceIndex === null) {
   lastDone: "",
   intervalYears: "",
   warningDays: "",
-  sendEmail: false,
   notesEn: "",
 notesDe: "",
   historyText: "",
@@ -1408,7 +1403,6 @@ const cancelMaintenanceForm = () => {
   lastDone: "",
   intervalYears: "",
   warningDays: "",
-  sendEmail: false,
   notesEn: "",
 notesDe: "",
   historyText: "",
@@ -1419,7 +1413,7 @@ const completeMaintenance = (index) => {
   const confirmComplete = window.confirm(t.completeMaintenanceConfirm);
   if (!confirmComplete) return;
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = toLocalDateString(new Date());
 
   const updated = [...maintenance];
 
@@ -1428,12 +1422,13 @@ const completeMaintenance = (index) => {
   updated[index] = {
     ...updated[index],
     lastDone: today,
-    history: [...oldHistory, today],
+    nextDue: addYears(today, updated[index].intervalYears),
+    history: Array.from(new Set([...oldHistory, today])),
   };
 
   setMaintenance(updated);
 
-  setAppNotice("✅ Maintenance marked complete");
+  setAppNotice(`✅ ${t.maintenanceCompleted}`);
 
   setTimeout(() => {
     setAppNotice("");
@@ -1638,7 +1633,7 @@ const cancelContactForm = () => {
 
     URL.revokeObjectURL(url);
 
-    setAppNotice("✅ Backup downloaded");
+    setAppNotice(`✅ ${t.backupDownloaded}`);
     setTimeout(() => setAppNotice(""), 3000);
   };
 
@@ -1662,10 +1657,10 @@ const cancelContactForm = () => {
         if (backup.documents) setDocuments(backup.documents);
         if (backup.contacts) setContacts(backup.contacts);
 
-        setAppNotice("✅ Backup restored");
+        setAppNotice(`✅ ${t.backupRestored}`);
         setTimeout(() => setAppNotice(""), 3000);
       } catch {
-        setAppNotice("❌ Invalid backup");
+        setAppNotice(`❌ ${t.invalidBackup}`);
         setTimeout(() => setAppNotice(""), 3000);
       }
     };
@@ -1744,7 +1739,7 @@ const companyContact = findCompanyContact(m.company);
   return (
     <div className={`card ${m.status}`} id={maintenanceId} key={i}>
       <h3>{getMaintenanceTypeName(m.type)}</h3>
-      <p><b>{t.properties}:</b> {m.property}</p>
+      <p><b>{t.property}:</b> {m.property}</p>
       <p><b>{t.company}:</b> {m.company}</p>
       {companyContact &&
         (companyContact.phone || companyContact.email || companyContact.website) && (
@@ -1765,7 +1760,7 @@ const companyContact = findCompanyContact(m.company);
       <>
         <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
         <p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
-        <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
+        <p><b>{t.status}:</b> {formatMaintenanceStatus(m.days)}</p>
       </>
       
       {(language === "en" ? m.notesEn : m.notesDe || m.notes) && (
@@ -1816,22 +1811,15 @@ const companyContact = findCompanyContact(m.company);
     display: showHeader ? "block" : "none",
   }}
 >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-  <div>
+          <div className="headerTop">
+  <div className="headerIdentity">
     <p className="eyebrow">{t.appSubtitle}</p>
     <div className="logoTitle">
   <h1>MartiRent</h1>
 </div>
   </div>
 
-  <div
-    style={{
-      fontSize: "16px",
-      fontWeight: "800",
-      color: "white",
-      textAlign: "right",
-    }}
-  >
+  <div className="todayText">
     {todayText}
   </div>
 </div>
@@ -1857,7 +1845,7 @@ const companyContact = findCompanyContact(m.company);
   <div className="offlineNotice">
     {language === "en"
       ? "YOU'RE OFFLINE - changes will not save"
-      : "DU BIST OFFLINE - Aenderungen werden nicht gespeichert"}
+      : "DU BIST OFFLINE - Änderungen werden nicht gespeichert"}
   </div>
 )}
           {tab === "home" && (
@@ -1876,20 +1864,21 @@ const companyContact = findCompanyContact(m.company);
     </button>
   </div>
 </div>
-{search ? (
+{search.trim() ? (
   <>
 <h3>{t.searchResults}</h3>
     <div className="card">
       <h3>{t.properties}</h3>
       {filteredProperties.length ? (
         filteredProperties.map((p, i) => (
-          <p
+          <button
+            type="button"
+            className="searchResultBtn"
             key={i}
             onClick={() => jumpToProperty(p)}
-            style={{ cursor: "pointer" }}
           >
             🏢 {p.name} — {p.address}
-          </p>
+          </button>
         ))
       ) : (
         <p className="muted">{t.noPropertiesFound}</p>
@@ -1900,13 +1889,14 @@ const companyContact = findCompanyContact(m.company);
       <h3>{t.maintenance}</h3>
       {filteredItems.length ? (
         filteredItems.map((m, i) => (
-          <p
-  key={i}
-  onClick={() => jumpToMaintenance(m)}
-  style={{ cursor: "pointer" }}
->
-  🔧 {m.property}: {getMaintenanceTypeName(m.type)} — {m.company}
-</p>
+          <button
+            type="button"
+            className="searchResultBtn"
+            key={i}
+            onClick={() => jumpToMaintenance(m)}
+          >
+            🔧 {m.property}: {getMaintenanceTypeName(m.type)} — {m.company}
+          </button>
         ))
       ) : (
         <p className="muted">{t.noMaintenanceFound}</p>
@@ -1917,13 +1907,14 @@ const companyContact = findCompanyContact(m.company);
       <h3>{t.contacts}</h3>
       {filteredContacts.length ? (
         filteredContacts.map((c, i) => (
-          <p
+          <button
+            type="button"
+            className="searchResultBtn"
             key={i}
-         onClick={() => jumpToContact(c)}
-            style={{ cursor: "pointer" }}
+            onClick={() => jumpToContact(c)}
           >
             📞 {c.company}
-          </p>
+          </button>
         ))
       ) : (
         <p className="muted">{t.noContactsFound}</p>
@@ -1973,7 +1964,7 @@ const companyContact = findCompanyContact(m.company);
                       key={i}
                       onClick={() => jumpToMaintenance(m)}
                     >
-                      <b>{m.property}</b>: {getMaintenanceTypeName(m.type)} - {m.days < 0 ? (language === "en" ? `${Math.abs(m.days)} days overdue` : `seit ${Math.abs(m.days)} Tagen überfällig`) : (language === "en" ? `due in ${m.days} days` : `noch ${m.days} Tage`)}
+                      <b>{m.property}</b>: {getMaintenanceTypeName(m.type)} - {formatMaintenanceStatus(m.days)}
                     </button>
                   ))
                 ) : (
@@ -1993,34 +1984,16 @@ const companyContact = findCompanyContact(m.company);
 
 <div className="quickGrid">
   <button
-  onClick={exportBackup}
-  style={{
-    color: "black",
-    fontSize: "14px",
-    fontWeight: "700",
-    fontFamily: "inherit",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "6px",
-  }}
->
+    className="backupBtn"
+    onClick={exportBackup}
+  >
   <span>💾</span>
   <span>{t.exportBackup}</span>
 </button>
 
 <button
+  className="backupBtn"
   onClick={() => document.getElementById("backupInput").click()}
-  style={{
-    color: "black",
-    fontSize: "14px",
-    fontWeight: "700",
-    fontFamily: "inherit",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "6px",
-  }}
 >
   <span>📂</span>
   <span>{t.restoreBackup}</span>
@@ -2051,10 +2024,10 @@ const companyContact = findCompanyContact(m.company);
     <div className="formOverlay" onClick={cancelPropertyForm}></div>
     <div className="card formCard">
     <h3>
-      {editingPropertyIndex === null ? `+ ${t.add}` : t.edit} {t.properties}
+      {editingPropertyIndex === null ? `+ ${t.add}` : t.edit} {t.property}
     </h3>
 
-    <label>{t.properties}</label>
+    <label>{t.property}</label>
     <input
       className="formInput"
       value={propertyForm.name}
@@ -2128,7 +2101,7 @@ const companyContact = findCompanyContact(m.company);
                 </>
               ) : (
                 <>
-                  <button onClick={() => setSelectedProperty(null)}>← Back</button>
+                  <button onClick={() => setSelectedProperty(null)}>← {t.back}</button>
                   <h2>{selectedProperty.name}</h2>
 
                   <div className="card">
@@ -2154,9 +2127,15 @@ const companyContact = findCompanyContact(m.company);
                         <p><b>{t.company}:</b> {m.company}</p>
                         <p><b>{t.lastDone}:</b> {formatDateDisplay(m.lastDone)}</p>
                         <p><b>{t.nextDue}:</b> {formatDateDisplay(m.nextDue)}</p>
-                        <p><b>{t.status}:</b> {m.days < 0 ? `${Math.abs(m.days)} days overdue` : `in ${m.days} days`}</p>
+                        <p><b>{t.status}:</b> {formatMaintenanceStatus(m.days)}</p>
 
-                        <button onClick={() => editMaintenance(safeIndex)}>
+                        <button
+                          onClick={() => {
+                            editMaintenance(safeIndex);
+                            setSelectedProperty(null);
+                            setTab("maintenance");
+                          }}
+                        >
                           {t.edit}
                         </button>
 
@@ -2215,28 +2194,28 @@ const companyContact = findCompanyContact(m.company);
     className={maintenanceFilter === "all" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("all")}
   >
-    {t.all}({filteredItems.length})
+    {t.all} ({filteredItems.length})
   </button>
 
   <button
     className={maintenanceFilter === "overdue" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("overdue")}
   >
-    {t.overdue}({overdue.length})
+    {t.overdue} ({overdue.length})
   </button>
 
   <button
     className={maintenanceFilter === "dueSoon" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("dueSoon")}
   >
-    {t.dueSoon}({dueSoon.length})
+    {t.dueSoon} ({dueSoon.length})
   </button>
 
   <button
     className={maintenanceFilter === "future" ? "activeFilter" : ""}
     onClick={() => setMaintenanceFilter("future")}
   >
-    {t.future}({futureItems.length})
+    {t.future} ({futureItems.length})
   </button>
 </div>
 {maintenanceFormOpen && (
@@ -2247,7 +2226,7 @@ const companyContact = findCompanyContact(m.company);
       {editingMaintenanceIndex === null ? `+ ${t.add}` : t.edit} {t.maintenance}
     </h3>
 
-    <label>{t.properties}</label>
+    <label>{t.property}</label>
     <select
       className="formInput"
       value={maintenanceForm.property}
@@ -2331,7 +2310,7 @@ const companyContact = findCompanyContact(m.company);
           intervalYears: e.target.value,
         })
       }
-      placeholder="0.5 = 6 months"
+      placeholder={language === "en" ? "0.5 = 6 months" : "0,5 = 6 Monate"}
     />
 
     
@@ -2349,23 +2328,7 @@ const companyContact = findCompanyContact(m.company);
   }
   placeholder="30"
 />
-<label style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "10px" }}>
-  <input
-    type="checkbox"
-    checked={maintenanceForm.sendEmail}
-    onChange={(e) =>
-      setMaintenanceForm({
-        ...maintenanceForm,
-        sendEmail: e.target.checked,
-      })
-    }
-  />
-  
-  {language === "en"
-    ? "Send reminder email to company"
-    : "Erinnerungs-E-Mail an Firma senden"}
-</label>
-<label>Notes English</label>
+<label>{language === "en" ? "Notes in English" : "Notizen auf Englisch"}</label>
 <textarea
   className="formInput"
   rows="4"
@@ -2379,7 +2342,7 @@ const companyContact = findCompanyContact(m.company);
   placeholder="Example: Every 2 years, together with chimney..."
 />
 
-<label>Notizen Deutsch</label>
+<label>{language === "en" ? "Notes in German" : "Notizen auf Deutsch"}</label>
 <textarea
   className="formInput"
   rows="4"
@@ -2443,7 +2406,10 @@ const companyContact = findCompanyContact(m.company);
               </div>
 
               <div className="calendarGridBig">
-                {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+                {(language === "de"
+                  ? ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
+                  : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+                ).map((d, i) => (
   <div key={i} className="dayNameBig">{d}</div>
 ))}
 
@@ -2500,7 +2466,7 @@ const companyContact = findCompanyContact(m.company);
                   <div className="formOverlay" onClick={cancelContactForm}></div>
                   <div className="card formCard">
                     <h3>
-                      {editingContactIndex === null ? `+ ${t.add}` : t.edit} {t.contacts}
+                      {editingContactIndex === null ? `+ ${t.add}` : t.edit} {t.contact}
                     </h3>
 
                     <label>{t.company}</label>
